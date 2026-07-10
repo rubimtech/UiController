@@ -1,0 +1,58 @@
+using FlaUI.Core.AutomationElements;
+using RevitUiController.Models;
+using static RevitUiController.AutomationHelper;
+
+namespace RevitUiController.Commands;
+
+public class HighlightCommand : ICommand
+{
+    public string Name => "highlight";
+    public string Description => "Highlight an element on screen: highlight <name> [duration-ms]";
+    public string Usage => "highlight <element-name> [duration-ms]";
+
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    {
+        if (args.Length == 0)
+        {
+            Console.Error.WriteLine("Usage: highlight <element-name> [duration-ms]");
+            return Task.FromResult(1);
+        }
+
+        var name = args[0];
+        var duration = args.Length > 1 && int.TryParse(args[1], out var d) ? d : 1500;
+
+        var element = FindFirstEnabledVisible(revitWindow, name);
+        if (element == null)
+        {
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            return Task.FromResult(1);
+        }
+
+        HighlightHelper.Highlight(element, duration);
+        Console.Write(OutputFormatter.FormatResult(new CommandResult
+        {
+            Command = "highlight",
+            Success = true,
+            Data = new { target = name, durationMs = duration }
+        }, Program.IsPretty));
+        return Task.FromResult(0);
+    }
+}
+
+public class HighlightClearCommand : ICommand
+{
+    public string Name => "highlight-clear";
+    public string Description => "Clear any active highlight overlay";
+    public string Usage => "highlight-clear";
+
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    {
+        HighlightHelper.Clear();
+        Console.Write(OutputFormatter.FormatResult(new CommandResult
+        {
+            Command = "highlight-clear",
+            Success = true
+        }, Program.IsPretty));
+        return Task.FromResult(0);
+    }
+}

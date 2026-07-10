@@ -1,0 +1,117 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "RevitUiController/0.28.5.0664": {
+        "dependencies": {
+          "FlaUI.UIA3": "4.0.0",
+          "YamlDotNet": "18.1.0"
+        },
+        "runtime": {
+          "RevitUiController.dll": {}
+        }
+      },
+      "FlaUI.Core/4.0.0": {
+        "dependencies": {
+          "System.Management": "5.0.0"
+        },
+        "runtime": {
+          "lib/net6.0-windows7.0/FlaUI.Core.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "FlaUI.UIA3/4.0.0": {
+        "dependencies": {
+          "FlaUI.Core": "4.0.0",
+          "Interop.UIAutomationClient": "10.19041.0"
+        },
+        "runtime": {
+          "lib/net6.0-windows7.0/FlaUI.UIA3.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "Interop.UIAutomationClient/10.19041.0": {
+        "runtime": {
+          "lib/netcoreapp3.0/Interop.UIAutomationClient.dll": {
+            "assemblyVersion": "10.0.19041.0",
+            "fileVersion": "10.0.19041.0"
+          }
+        }
+      },
+      "System.Management/5.0.0": {
+        "runtime": {
+          "lib/netstandard2.0/System.Management.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "5.0.20.51904"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/netcoreapp2.0/System.Management.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "5.0.20.51904"
+          }
+        }
+      },
+      "YamlDotNet/18.1.0": {
+        "runtime": {
+          "lib/net10.0/YamlDotNet.dll": {
+            "assemblyVersion": "18.0.0.0",
+            "fileVersion": "18.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RevitUiController/0.28.5.0664": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FlaUI.Core/4.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8GPCvcmRezKwgnYSULs1rU2iC+XvwiRE01ydU0/Uk+QAGzmvCwbMaCXDWJBLtRx0JXek5m21G7jGHTq3WkbTXA==",
+      "path": "flaui.core/4.0.0",
+      "hashPath": "flaui.core.4.0.0.nupkg.sha512"
+    },
+    "FlaUI.UIA3/4.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IOx2D6bj0PGor7ic9JKDF626NZ1HclHsnfpOR4jdXOeWU5GfkBi0U+5jPjI45KKNAwjOuKjLX3ykW/PtsPwbfg==",
+      "path": "flaui.uia3/4.0.0",
+      "hashPath": "flaui.uia3.4.0.0.nupkg.sha512"
+    },
+    "Interop.UIAutomationClient/10.19041.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Me5vKNZ1JSg6txTsPQXaWx7fVNh+fmcUPPwtDKJtqvbMM0N8aoa/l/QPolkJIRnasCabCNt4v2zG4p1Q9HU98A==",
+      "path": "interop.uiautomationclient/10.19041.0",
+      "hashPath": "interop.uiautomationclient.10.19041.0.nupkg.sha512"
+    },
+    "System.Management/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MF1CHaRcC+MLFdnDthv4/bKWBZnlnSpkGqa87pKukQefgEdwtb9zFW6zs0GjPp73qtpYYg4q6PEKbzJbxCpKfw==",
+      "path": "system.management/5.0.0",
+      "hashPath": "system.management.5.0.0.nupkg.sha512"
+    },
+    "YamlDotNet/18.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw==",
+      "path": "yamldotnet/18.1.0",
+      "hashPath": "yamldotnet.18.1.0.nupkg.sha512"
+    }
+  }
+}
