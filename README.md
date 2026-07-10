@@ -1,8 +1,8 @@
 # RevitUiController
 
-**CLI-инструмент для программного управления Revit через UI Automation (FlaUI UIA3).**
+**CLI-инструмент для программного управления Windows-приложениями через UI Automation (FlaUI UIA3).**
 
-Позволяет AI-агентам и CI-сценариям выполнять действия в Revit: нажимать кнопки ленты, заполнять диалоги, переключать виды, читать состояние UI, выполнять Revit API команды — без необходимости смотреть на экран.
+Поддерживает **любые окна** (не только Revit): переключение между окнами, работа с активным окном, мультимонитор. Позволяет AI-агентам и CI-сценариям выполнять действия: нажимать кнопки, заполнять диалоги, переключать виды, читать состояние UI, выполнять Revit API команды — без необходимости смотреть на экран.
 
 ---
 
@@ -48,13 +48,101 @@ dotnet run --project tools\RevitUiController -- <command> [args] [--flags]
 | `--pretty` | Pretty-print JSON (человекочитаемый) |
 | `--screenshot` | Включить base64 скриншот в `CommandResult.Screenshot` |
 | `--verbosity minimal\|normal\|full` | Степень детальности ответа |
-| `--pid <number>` | Подключиться к конкретному процессу Revit по PID |
+| `--pid <number>` | Подключиться к конкретному процессу по PID |
 | `--process-name <name>` | Имя процесса (по умолчанию: `Revit`) |
+| `--window-title <title>` | Подключиться к окну по заголовку (contains) |
+| `--active` | Подключиться к текущему активному (foreground) окну |
 | `--connect-timeout <sec>` | Таймаут ожидания процесса (по умолчанию: 30 с) |
 
 ---
 
 ## Команды (полный справочник)
+
+### 🖥️ Desktop Window Management (любые окна)
+
+```powershell
+list-all (la) [--filter <text>]       # Список ВСЕХ visible top-level окон рабочего стола
+active                                  # Инфо о текущем активном окне + монитор
+focus <title> [--pid <N>|--hwnd <hex>] # Переключиться на окно (bring to foreground)
+monitors                                # Список мониторов: разрешение, DPI, work area, primary
+```
+
+**Примеры:**
+
+```powershell
+# Список всех окон
+dotnet run --project tools\RevitUiController -- list-all --pretty
+
+# Фильтр по процессу
+dotnet run --project tools\RevitUiController -- list-all --filter notepad --pretty
+
+# Инфо об активном окне
+dotnet run --project tools\RevitUiController -- active --pretty
+
+# Работа с любым окном по заголовку
+dotnet run --project tools\RevitUiController -- --window-title "Блокнот" list-controls
+
+# Работа с текущим активным окном
+dotnet run --project tools\RevitUiController -- --active info
+
+# Переключиться на окно
+dotnet run --project tools\RevitUiController -- focus "Блокнот"
+
+# Список мониторов
+dotnet run --project tools\RevitUiController -- monitors --pretty
+```
+
+### 🧩 UIA Pattern Tools (чтение UI без скриншотов)
+
+Команды для чтения и взаимодействия с любыми WPF/WinForms контролами через UIA-паттерны — без скриншотов, без LLM Vision, без OpenCV.
+
+```powershell
+patterns <name>                           # Показать все UIA-паттерны элемента:
+                                          #   Invoke, Toggle, ExpandCollapse, SelectionItem,
+                                          #   Value, RangeValue, Grid, Table, Scroll, Text, ...
+
+dump-patterns [depth] [--type <ct>]      # Дампить UIA-дерево с паттернами у каждого элемента
+  [--filter-name <name>]
+
+tree-expand <name> [--all] [--depth N]   # Развернуть TreeView-узел и рекурсивно дампить всю ветку
+
+combo-read (cr) <name>                    # Открыть ComboBox, прочитать ВСЕ items, закрыть
+
+grid-read (gr) <name> [--rows N]          # Прочитать DataGrid через GridPattern:
+                                          #   строки × колонки, structured data
+
+list-items (li) <name> [--max N]          # Прочитать все ListBox/ListView items
+
+table-read (tr) <name> [--rows N]         # Прочитать Table с column headers
+
+scroll-to <name> [--parent <p>]           # ScrollIntoView — прокрутить к элементу
+```
+
+**Примеры:**
+
+```powershell
+# Узнать, что можно сделать с элементом
+dotnet run --project tools\RevitUiController -- patterns "OK" --pretty
+# → { patterns: ["Invoke", "Value"], toggleState: null, canInvoke: true, value: "OK" }
+
+# Прочитать все записи ComboBox
+dotnet run --project tools\RevitUiController -- combo-read "Этаж" --pretty
+# → { selectedValue: "Level 1", items: ["Level 1", "Level 2", "Level 3", ...] }
+
+# Прочитать DataGrid структурированно
+dotnet run --project tools\RevitUiController -- grid-read "Спецификация" --rows 20 --pretty
+# → { dimensions: {rows: 45, columns: 8}, headers: [...], rows: [...] }
+
+# Дампить UIA-дерево с паттернами
+dotnet run --project tools\RevitUiController -- dump-patterns 2 --type Button --pretty
+# → элементы с [patterns: ["Invoke"]]
+
+# Развернуть TreeView
+dotnet run --project tools\RevitUiController -- tree-expand "Project Browser" --all --pretty
+
+# Прокрутить к элементу перед кликом
+dotnet run --project tools\RevitUiController -- scroll-to "Wall" --parent "TreeView"
+```
 
 ### 🔍 UI Exploration
 
@@ -371,10 +459,12 @@ session-end
 
 ```mermaid
 flowchart TB
-    CLI["CLI / dotnet run"] --> GlobalFlags["Parse flags: --pid, --pretty, --screenshot"]
-    GlobalFlags --> CommandDispatch["Command Dispatch (ICommand lookup)"]
-    CommandDispatch --> RevitSession["RevitSession.Connect() - FlaUI UIA3"]
-    RevitSession --> ExecuteCmd["cmd.ExecuteAsync(revitWindow, args)"]
+    CLI["CLI / dotnet run"] --> GlobalFlags["Parse flags: --pid, --active, --window-title, --pretty, --screenshot"]
+    GlobalFlags --> DesktopWindowManager["DesktopWindowManager init\n+ ActiveWindowTracker (WinEventHook)"]
+    DesktopWindowManager --> TargetResolution["Window Resolution:\n--active → GetForegroundWindow\n--pid → GetProcessById\n--process-name → FindFirstProcess\n--window-title → EnumWindows + title match"]
+    TargetResolution --> WindowSession["WindowSession.Connect() via FlaUI UIA3\n(ANY window, not just Revit)"]
+    WindowSession --> CommandDispatch["Command Dispatch (ICommand lookup)"]
+    CommandDispatch --> ExecuteCmd["cmd.ExecuteAsync(window, args)"]
 
     subgraph ExecutionPipeline["Execution Pipeline"]
         ExecuteCmd --> BeforeState["CaptureState(): active dialogs, tab, view"]
@@ -412,12 +502,14 @@ flowchart TB
 sequenceDiagram
     participant CLI as CLI Agent
     participant Program as Program.cs
-    participant Session as RevitSession
+    participant WinMgr as DesktopWindowManager
+    participant Session as WindowSession
     participant Cmd as ICommand
     participant FlaUI as FlaUI UIA3
     participant Output as OutputFormatter
 
-    CLI->>Program: run -- ribbon Wall Architecture
+    CLI->>Program: run --active state
+    CLI->>Program: run --window-title "Блокнот" click Файл
     Program->>Program: ParseGlobalFlags()
     Program->>Session: Connect(pid?, processName?)
     Session-->>Program: revitWindow (AutomationElement)
@@ -537,7 +629,11 @@ flowchart LR
 ```
 RevitUiController/
 ├── Program.cs                          # CLI entry, регистрация команд, парсинг флагов
-├── RevitSession.cs                     # Подключение к Revit через FlaUI
+├── RevitSession.cs                     # Подключение к Revit через FlaUI (legacy)
+├── WindowSession.cs                    # Подключение к ЛЮБОМУ окну через FlaUI
+├── DesktopWindowManager.cs             # Оркестратор: поиск окон, переключение, мониторы
+├── ActiveWindowTracker.cs              # WinEventHook + фоновое отслеживание активного окна
+├── NativeMethods.cs                    # Win32 P/Invoke: EnumWindows, SetWinEventHook и др.
 ├── AutomationHelper.cs                 # Утилиты: поиск, SafeGetChildren, Tokenize
 ├── OutputFormatter.cs                  # JSON-форматирование ответов (CommandResult)
 ├── SessionContext.cs                   # Stateful session (dialog, tab, variables, stack)
@@ -555,19 +651,32 @@ RevitUiController/
 ├── Win32Helper.cs                      # Win32 SendInput/PostMessage fallback
 ├── WinAppDriverClient.cs               # WinAppDriver REST API клиент
 ├── PipeBridgeClient.cs                 # Named Pipe клиент для Revit API
+├── Models/
+│   ├── WindowInfo.cs                   # Метаданные окна: hWnd, title, PID, bounds, монитор
+│   ├── MonitorInfo.cs                  # Информация о мониторе: разрешение, DPI, work area
+│   └── WindowQuery.cs                  # Параметры поиска окна (PID/name/title/active)
 └── Commands/
+    ├── ActiveCommand.cs                # active — активное окно + монитор
     ├── AiFindCommand.cs                # Многостратегический поиск (6 стратегий)
     ├── AllureConfigCommands.cs          # Allure-отчёты
     ├── AssertCommands.cs                # assert-dialog, assert-ribbon, assert-view
     ├── BatchCommands.cs                 # ps-batch (PropertySheet batch-fill)
     ├── CacheCommands.cs                 # cached-find, cache-clear, cache-stats
     ├── CanvasCommands.cs                # canvas-click, canvas-drag, canvas-zoom, canvas-screenshot
+    ├── ComboReadCommand.cs              # combo-read (cr) — читать ComboBox items
     ├── DialogCommands.cs                # ps (PropertySheet) — поля, checkbox, combobox, datagrid
+    ├── DumpPatternsCommand.cs           # dump-patterns — UIA-дерево с паттернами
     ├── ExplorationCommands.cs           # list-windows, list-controls, find, dump, inspect, info
+    ├── FocusCommand.cs                  # focus — переключение на окно
+    ├── GridReadCommand.cs               # grid-read (gr) — читать DataGrid через GridPattern
     ├── HighlightCommand.cs              # highlight, highlight-clear
     ├── InteractionCommands.cs           # click, ribbon, switch-view, type, expand, ribbon-tabs, rb
+    ├── ListAllWindowsCommand.cs         # list-all — все окна рабочего стола
+    ├── ListItemsCommand.cs              # list-items (li) — читать ListBox/ListView
     ├── LogCommands.cs                   # logs
+    ├── MonitorsCommand.cs               # monitors — список мониторов
     ├── MouseCommands.cs                 # mouse-click, mouse-drag, mouse-scroll, mouse-pos, mouse-type
+    ├── PatternsCommand.cs               # patterns — UIA-паттерны элемента
     ├── ProcessCommands.cs               # process-list, process-info
     ├── RecorderCommands.cs              # record-start, record-stop, record-status, record-save
     ├── RetryCommands.cs                 # retry-click, retry-dialog
@@ -577,10 +686,13 @@ RevitUiController/
     ├── SafetyCommands.cs                # safety-check, revit-restart
     ├── ScriptCommands.cs                # script, dry-run
     ├── ScriptDiffCommands.cs            # script-list, script-log, script-diff
+    ├── ScrollToCommand.cs               # scroll-to — ScrollIntoView
     ├── SessionCommands.cs               # session-begin, session-end, session-status
     ├── StateCommand.cs                  # state
     ├── StatusBarCommands.cs             # statusbar, wait-progress
+    ├── TableReadCommand.cs              # table-read (tr) — читать Table с headers
     ├── TaskDialogCommand.cs             # taskdialog
+    ├── TreeExpandCommand.cs             # tree-expand — развернуть TreeView
     ├── UiMapCommands.cs                 # uimap-load/save/resolve/register/list/auto
     ├── WaitForCommand.cs                # wait-for, wait-close, wait-element
     └── Win32Commands.cs                 # win32-click, win32-enum

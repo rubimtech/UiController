@@ -15,6 +15,10 @@ public static class Program
         ["sl"] = "script-list",
         ["slog"] = "script-log",
         ["sdiff"] = "script-diff",
+        ["cr"] = "combo-read",
+        ["gr"] = "grid-read",
+        ["li"] = "list-items",
+        ["tr"] = "table-read",
     };
 
     public static bool IsPretty { get; set; }
@@ -22,8 +26,12 @@ public static class Program
     public static string Verbosity { get; set; } = "normal";
     public static int? TargetPid { get; set; }
     public static string ProcessName { get; set; } = "Revit";
+    public static string? WindowTitle { get; set; }
+    public static bool UseActiveWindow { get; set; }
     public static int ConnectTimeoutSec { get; set; } = 30;
-    public static RevitSession? CurrentSession { get; set; }
+    public static WindowSession? CurrentSession { get; set; }
+    public static WindowSession? CurrentWindowSession { get; set; }
+    public static DesktopWindowManager? WindowManager { get; set; }
 
     static Program()
     {
@@ -115,6 +123,19 @@ public static class Program
         Register(new SessionEndCommand());
         Register(new SessionStatusCommand());
 
+        Register(new ListAllWindowsCommand());
+        Register(new FocusCommand());
+        Register(new ActiveCommand());
+        Register(new MonitorsCommand());
+        Register(new PatternsCommand());
+        Register(new TreeExpandCommand());
+        Register(new ComboReadCommand());
+        Register(new GridReadCommand());
+        Register(new ListItemsCommand());
+        Register(new TableReadCommand());
+        Register(new ScrollToCommand());
+        Register(new DumpPatternsCommand());
+
         if (UiMap.TryLoadDefault() && Verbosity == "full")
             Console.Error.WriteLine($"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
     }
@@ -141,12 +162,39 @@ public static class Program
 
         if (Commands.TryGetValue(cmdName, out var cmd))
         {
-            var session = RevitSession.Connect(TargetPid, ProcessName, ConnectTimeoutSec);
+            WindowManager = new DesktopWindowManager();
+
+            WindowSession? session = null;
+
+            if (UseActiveWindow)
+            {
+                session = WindowSession.ConnectToActive();
+            }
+            else if (TargetPid.HasValue || ProcessName != "Revit")
+            {
+                session = WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec);
+            }
+            else if (!string.IsNullOrEmpty(WindowTitle))
+            {
+                session = WindowSession.ConnectByTitle(WindowTitle, ConnectTimeoutSec);
+            }
+            else
+            {
+                session = WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec);
+            }
+
             if (session == null)
                 return 1;
 
             CurrentSession = session;
+            CurrentWindowSession = session;
+
+            SessionContext.ActiveHwnd = session.Process?.MainWindowHandle.ToInt64();
+            SessionContext.ActivePid = session.Process?.Id;
+            SessionContext.ActiveProcessName = session.Process?.ProcessName;
+
             using (session)
+            using (WindowManager)
             {
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
@@ -195,6 +243,10 @@ public static class Program
                 TargetPid = pid;
             else if (args[i] == "--process-name" && i + 1 < args.Length)
                 ProcessName = args[++i];
+            else if (args[i] == "--window-title" && i + 1 < args.Length)
+                WindowTitle = args[++i];
+            else if (args[i] == "--active")
+                UseActiveWindow = true;
             else if (args[i] == "--connect-timeout" && i + 1 < args.Length && int.TryParse(args[++i], out var timeout))
                 ConnectTimeoutSec = timeout;
             else
@@ -206,17 +258,35 @@ public static class Program
     private static void PrintHelp()
     {
         Console.WriteLine("""
-RevitUiController — FlaUI-based Revit automation tool
+RevitUiController — FlaUI-based UI automation tool (Revit + any desktop window)
 
 Global flags:
   --pretty                         Pretty-print JSON output
   --screenshot                     Include base64 screenshot in output
   --verbosity minimal|normal|full  Control output detail (default: normal)
-  --pid <number>                   Connect to specific Revit process by PID
+  --pid <number>                   Connect to specific process by PID
   --process-name <name>            Process name to find (default: Revit)
+  --window-title <title>           Connect to window by title (contains match)
+  --active                         Connect to the currently active/foreground window
   --connect-timeout <sec>          Wait timeout for process (default: 30)
 
-Commands:
+Desktop Window Management (any process):
+  list-all (la) [--filter <txt>]        List ALL visible top-level windows on desktop
+  focus <title> [--pid <N>|--hwnd <h>]  Bring a window to foreground
+  active                                Show active/foreground window + monitor info
+  monitors                              List all monitors (resolution, DPI, work area)
+
+UIA Pattern Tools (read/interact with ANY UI control without screenshots):
+  patterns <name>                       Show all UIA patterns for an element (Invoke, Toggle, Grid, Table, Scroll, etc.)
+  dump-patterns [depth] [--type <ct>]   Dump UIA tree with supported patterns per element
+  tree-expand <name> [--all] [--depth]  Expand TreeView node and dump subtree
+  combo-read (cr) <name>                Open ComboBox, read all items, close
+  grid-read (gr) <name> [--rows N]      Read DataGrid via GridPattern (rows×columns)
+  list-items (li) <name> [--max N]      Read all ListBox/ListView items
+  table-read (tr) <name> [--rows N]     Read Table with column headers
+  scroll-to <name> [--parent <p>]       Scroll element into view (ScrollItemPattern)
+
+Commands (Revit-focused, work with --process-name or --pid):
   list-windows (lw)                     List all Revit windows/dialogs
   list-controls (lc) [window-name]      List controls in a window
   click <button-name>                   Click a button/control by name

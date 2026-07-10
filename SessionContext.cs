@@ -9,6 +9,12 @@ public static class SessionContext
     public static Stack<string> DialogStack { get; } = new();
     public static Dictionary<string, object> Variables { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public static long? ActiveHwnd { get; set; }
+    public static int? ActiveMonitor { get; set; }
+    public static string? ActiveProcessName { get; set; }
+    public static int? ActivePid { get; set; }
+    public static string? ActiveMonitorName { get; set; }
+
     private static readonly object Lock = new();
 
     public static void Begin()
@@ -21,6 +27,11 @@ public static class SessionContext
             ActiveViewTab = null;
             DialogStack.Clear();
             Variables.Clear();
+            ActiveHwnd = null;
+            ActiveMonitor = null;
+            ActiveProcessName = null;
+            ActivePid = null;
+            ActiveMonitorName = null;
         }
     }
 
@@ -34,6 +45,11 @@ public static class SessionContext
             ActiveViewTab = null;
             DialogStack.Clear();
             Variables.Clear();
+            ActiveHwnd = null;
+            ActiveMonitor = null;
+            ActiveProcessName = null;
+            ActivePid = null;
+            ActiveMonitorName = null;
         }
     }
 
@@ -96,7 +112,12 @@ public static class SessionContext
                 dialogStackDepth = DialogStack.Count,
                 dialogStack = DialogStack.Reverse().ToList(),
                 variableCount = Variables.Count,
-                variableNames = Variables.Keys.ToList()
+                variableNames = Variables.Keys.ToList(),
+                activeHwnd = ActiveHwnd,
+                activeMonitor = ActiveMonitor,
+                activeProcessName = ActiveProcessName,
+                activePid = ActivePid,
+                activeMonitorName = ActiveMonitorName
             };
         }
     }
