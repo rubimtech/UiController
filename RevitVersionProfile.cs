@@ -1,6 +1,10 @@
+using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
+using Microsoft.Win32;
 
 namespace RevitUiController;
+
+public record DetectedVersion(int Year, string Source);
 
 public class RevitVersionProfile
 {
@@ -18,15 +22,85 @@ public class RevitVersionProfile
         [2027] = new() { Year = 2027, Tfm = "net10.0-windows", RibbonTabType = "UIFramework.RvtRibbonTab" },
     };
 
-    public static RevitVersionProfile Detect(AutomationElement revitWindow)
+    public static RevitVersionProfile Detect(AutomationElement revitWindow, Process? process = null)
+    {
+        var detected = DetectVersion(revitWindow, process);
+        return Profiles.TryGetValue(detected.Year, out var p) ? p : Profiles[2026];
+    }
+
+    public static DetectedVersion DetectVersion(AutomationElement revitWindow, Process? process = null)
     {
         var title = revitWindow.Name ?? "";
-        foreach (var (year, profile) in Profiles)
+        foreach (var (year, _) in Profiles)
+            if (title.Contains(year.ToString()))
+                return new DetectedVersion(year, "window_title");
+
+        var fromRegistry = DetectFromRegistry();
+        if (fromRegistry.HasValue)
+            return new DetectedVersion(fromRegistry.Value, "registry");
+
+        if (process != null)
         {
-            if (title.Contains(year.ToString())) return profile;
+            try
+            {
+                var fvi = process.MainModule?.FileVersionInfo;
+                if (fvi != null)
+                {
+                    var fromFileVersion = DetectFromFileVersion(fvi);
+                    if (fromFileVersion.HasValue)
+                        return new DetectedVersion(fromFileVersion.Value, "file_version");
+                }
+            }
+            catch { }
         }
-        return Profiles[2026];
+
+        return new DetectedVersion(2026, "default");
     }
+
+    private static int? DetectFromRegistry()
+    {
+        foreach (var year in KnownYears)
+        {
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey($@"SOFTWARE\Autodesk\Revit\{year}\Product");
+                if (key != null) return year;
+            }
+            catch { }
+        }
+        return null;
+    }
+
+    private static int? DetectFromFileVersion(FileVersionInfo fvi)
+    {
+        var version = fvi.FileVersion ?? fvi.ProductVersion ?? "";
+        var parts = version.Split('.');
+        if (parts.Length > 0 && int.TryParse(parts[0], out var major))
+        {
+            if (major >= 2022 && major <= 2027)
+                return major;
+            if (major >= 22 && major <= 27)
+                return 2000 + major;
+        }
+        return null;
+    }
+
+    public static List<int> GetInstalledRevitVersions()
+    {
+        var versions = new List<int>();
+        foreach (var year in KnownYears)
+        {
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey($@"SOFTWARE\Autodesk\Revit\{year}");
+                if (key != null) versions.Add(year);
+            }
+            catch { }
+        }
+        return versions;
+    }
+
+    private static readonly int[] KnownYears = [2022, 2023, 2024, 2025, 2026, 2027];
 
     public static RevitVersionProfile ForYear(int year)
     {

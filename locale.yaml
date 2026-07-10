@@ -1,0 +1,23 @@
+entries:
+  Стена: Wall
+  Дверь: Door
+  Окно: Window
+  Перекрытие: Floor
+  Крыша: Roof
+  Колонна: Column
+  Балка: Beam
+  Лестница: Stair
+  Потолок: Ceiling
+  Ограждение: Railing
+  Труба: Pipe
+  Воздуховод: Duct
+  Кабель: Cable
+  Архитектура: Architecture
+  Конструкции: Structure
+  Системы: Systems
+  Вставка: Insert
+  Аннотации: Annotate
+  Вид: View
+  Управление: Manage
+  Модификация: Modify
+  Совместная работа: Collaborate

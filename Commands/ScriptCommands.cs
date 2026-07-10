@@ -38,7 +38,7 @@ public class ScriptCommand : ICommand
 
     public string Name => "script";
     public string Description => "Run commands from a script file (in-process)";
-    public string Usage => "script <file-path>";
+    public string Usage => "script <file-path> [--auto-heal] [--auto-heal-max-retry N]";
 
     public ScriptCommand(Dictionary<string, ICommand> commands)
     {
@@ -47,13 +47,27 @@ public class ScriptCommand : ICommand
 
     public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
-        if (args.Length == 0)
+        var autoHeal = false;
+        var autoHealMaxRetry = 3;
+        var fileArgs = new List<string>();
+
+        for (int i = 0; i < args.Length; i++)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "script <file-path>", null, Program.IsPretty));
+            if (args[i] == "--auto-heal")
+                autoHeal = true;
+            else if (args[i] == "--auto-heal-max-retry" && i + 1 < args.Length && int.TryParse(args[++i], out var retry))
+                autoHealMaxRetry = retry;
+            else
+                fileArgs.Add(args[i]);
+        }
+
+        if (fileArgs.Count == 0)
+        {
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "script <file-path> [--auto-heal] [--auto-heal-max-retry N]", null, Program.IsPretty));
             return 1;
         }
 
-        var filePath = string.Join(" ", args);
+        var filePath = string.Join(" ", fileArgs);
         if (!File.Exists(filePath))
         {
             Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.IsPretty));
@@ -206,6 +220,55 @@ public class ScriptCommand : ICommand
 
             executed++;
             var exitCode = await cmd.ExecuteAsync(revitWindow, cmdArgs, ct);
+
+            if (exitCode != 0 && autoHeal)
+            {
+                for (int healAttempt = 0; healAttempt < autoHealMaxRetry; healAttempt++)
+                {
+                    Console.Error.WriteLine($"  [AUTO-HEAL] Attempt {healAttempt + 1}/{autoHealMaxRetry} for: {cmdName} {string.Join(" ", cmdArgs)}");
+                    LoggingService.Warn("auto-heal", $"Attempt {healAttempt + 1}/{autoHealMaxRetry} for: {cmdName} {string.Join(" ", cmdArgs)}");
+
+                    try { await SafetyGuard.DismissWarningDialogs(revitWindow, ct); } catch { }
+
+                    if (cmdArgs.Length > 0)
+                    {
+                        var elementName = cmdArgs[0];
+                        try
+                        {
+                            var found = AutomationHelper.FindFirstEnabledVisible(revitWindow, elementName);
+                            if (found != null)
+                            {
+                                var autoId = AutomationHelper.SafeGetAutoId(found);
+                                var name = AutomationHelper.SafeGetName(found);
+                                UiMap.Register(elementName, new UiMapEntry
+                                {
+                                    AutomationId = string.IsNullOrEmpty(autoId) ? null : autoId,
+                                    Name = string.IsNullOrEmpty(name) ? null : name
+                                });
+                                Console.WriteLine($"  [AUTO-HEAL] Registered UiMap entry for '{elementName}' (autoId={autoId}, name={name})");
+                                LoggingService.Info("auto-heal", $"Registered UiMap entry for '{elementName}'");
+                            }
+                            else
+                            {
+                                Console.Error.WriteLine($"  [AUTO-HEAL] Element '{elementName}' not found for UiMap registration");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LoggingService.Warn("auto-heal", $"UiMap registration failed: {ex.Message}");
+                        }
+                    }
+
+                    exitCode = await cmd.ExecuteAsync(revitWindow, cmdArgs, ct);
+                    if (exitCode == 0)
+                    {
+                        Console.WriteLine($"  [AUTO-HEAL] Healed successfully after {healAttempt + 1} attempt(s)");
+                        LoggingService.Info("auto-heal", $"Healed successfully after {healAttempt + 1} attempt(s)");
+                        break;
+                    }
+                }
+            }
+
             if (exitCode != 0)
                 failed++;
             LoggingService.Info("script", $"Executed: {cmdName} {string.Join(" ", cmdArgs)}");

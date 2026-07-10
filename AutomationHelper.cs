@@ -103,6 +103,16 @@ public static class AutomationHelper
 
     public static AutomationElement? FindFirstEnabledVisible(AutomationElement parent, string name, int maxDepth = 8)
     {
+        var candidates = UiMap.IsLoaded ? UiMap.Resolve(name) : new List<SelectorCandidate>();
+        var autoIds = candidates
+            .Where(c => !string.IsNullOrEmpty(c.AutomationId))
+            .Select(c => c.AutomationId!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var candidateNames = candidates
+            .Where(c => !string.IsNullOrEmpty(c.Name))
+            .Select(c => c.Name!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var rootChildren = SafeGetChildren(parent, 8000);
         if (rootChildren.Length == 0) return null;
 
@@ -132,6 +142,12 @@ public static class AutomationHelper
                         var cName = c.Name ?? "";
                         var autoId = c.AutomationId ?? "";
 
+                        if (autoIds.Count > 0 && autoIds.Contains(autoId))
+                            return c;
+
+                        if (candidateNames.Count > 0 && candidateNames.Contains(cName))
+                            return c;
+
                         if (cName.Equals(name, StringComparison.OrdinalIgnoreCase) ||
                             autoId.Equals(name, StringComparison.OrdinalIgnoreCase) ||
                             cName.StartsWith(name, StringComparison.OrdinalIgnoreCase) ||
@@ -147,6 +163,22 @@ public static class AutomationHelper
                 }
             }
         }
+
+        if (candidates.Count > 0)
+        {
+            foreach (var candidate in candidates)
+            {
+                if (candidate.Fallbacks != null)
+                {
+                    foreach (var fb in candidate.Fallbacks)
+                    {
+                        var result = FindFirstEnabledVisible(parent, fb, maxDepth);
+                        if (result != null) return result;
+                    }
+                }
+            }
+        }
+
         return null;
     }
 

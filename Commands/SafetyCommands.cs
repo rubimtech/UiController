@@ -11,17 +11,57 @@ public class SafetyCheckCommand : ICommand
 
     public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
-        var unexpected = SafetyGuard.FindUnexpectedDialogs(revitWindow);
-        await SafetyGuard.DismissWarningDialogs(revitWindow, ct);
+        if (Program.EventService is { IsListening: true })
+        {
+            var unexpected = SafetyGuard.FindUnexpectedDialogs(revitWindow);
+            if (unexpected.Count > 0)
+            {
+                await SafetyGuard.DismissWarningDialogs(revitWindow, ct);
+            }
+            else
+            {
+                var tcs = new TaskCompletionSource<bool>();
+                EventHandler<AutomationEventService.UiEventRecord>? handler = null;
+                handler = (_, record) =>
+                {
+                    if (record.Type == "WindowOpened" && record.ControlType == "Window")
+                    {
+                        var dialogs = SafetyGuard.FindUnexpectedDialogs(revitWindow);
+                        if (dialogs.Count > 0)
+                        {
+                            tcs.TrySetResult(true);
+                            if (Program.EventService != null)
+                                Program.EventService.OnEvent -= handler;
+                        }
+                    }
+                };
+                if (Program.EventService != null)
+                {
+                    Program.EventService.OnEvent += handler;
+                    using var ctr = ct.Register(() => { tcs.TrySetResult(false); if (Program.EventService != null) Program.EventService.OnEvent -= handler; });
+                    if (await Task.WhenAny(tcs.Task, Task.Delay(5000, ct)) == tcs.Task && tcs.Task.Result)
+                    {
+                        await SafetyGuard.DismissWarningDialogs(revitWindow, ct);
+                    }
+                    Program.EventService.OnEvent -= handler;
+                }
+            }
+        }
+        else
+        {
+            var unexpected = SafetyGuard.FindUnexpectedDialogs(revitWindow);
+            await SafetyGuard.DismissWarningDialogs(revitWindow, ct);
+        }
 
+        var found = SafetyGuard.FindUnexpectedDialogs(revitWindow);
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
             Command = "safety-check",
-            Success = unexpected.Count == 0,
-            Error = unexpected.Count > 0 ? $"Dismissed {unexpected.Count} unexpected dialog(s)" : null,
-            Data = new { unexpectedDialogsFound = unexpected.Count, dismissed = true }
+            Success = found.Count == 0,
+            Error = found.Count > 0 ? $"Found {found.Count} unexpected dialog(s) after dismiss" : null,
+            Data = new { remainingDialogs = found.Count, dismissed = true }
         }, Program.IsPretty));
-        return 0;
+        return found.Count == 0 ? 0 : 1;
     }
 }
 

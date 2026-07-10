@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
@@ -277,7 +278,7 @@ public class CvClickCommand : ICommand
 public class CvListTemplatesCommand : ICommand
 {
     public string Name => "cv-templates";
-    public string Description => "List available template images";
+    public string Description => "List available template images with metadata";
     public string Usage => "cv-templates [filter]";
 
     public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
@@ -292,11 +293,26 @@ public class CvListTemplatesCommand : ICommand
             Data = new
             {
                 count = templates.Count,
-                templates = templates.Select(t => new
+                templates = templates.Select(t =>
                 {
-                    name = t.Name,
-                    path = t.Path,
-                    sizeKb = t.SizeKb,
+                    var meta = CvMatchClient.LoadTemplateMetadata(t.Path);
+                    return new
+                    {
+                        name = t.Name,
+                        path = t.Path,
+                        sizeKb = t.SizeKb,
+                        metadata = meta != null ? new
+                        {
+                            width = meta.Width,
+                            height = meta.Height,
+                            dpiX = meta.DpiX,
+                            dpiY = meta.DpiY,
+                            revitVersion = meta.RevitVersion,
+                            timestamp = meta.Timestamp,
+                            region = meta.Region,
+                            elementName = meta.ElementName,
+                        } : null,
+                    };
                 }),
             },
         }, Program.IsPretty));

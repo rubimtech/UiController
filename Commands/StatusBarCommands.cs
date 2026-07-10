@@ -106,6 +106,19 @@ public class WaitProgressCommand : ICommand
     {
         var timeout = args.Length > 0 && int.TryParse(args[0], out var t) ? t * 1000 : 60000;
 
+        if (Program.EventService is { IsListening: true })
+        {
+            var completed = await Program.EventService.WaitForProgressAsync(timeout, ct);
+            Console.Write(OutputFormatter.FormatResult(new CommandResult
+            {
+                Command = "wait-progress",
+                Success = completed,
+                Error = completed ? null : $"Progress did not complete within {timeout / 1000}s",
+                Data = completed ? new { action = "completed" } : null
+            }, Program.IsPretty));
+            return completed ? 0 : 1;
+        }
+
         var deadline = DateTime.UtcNow.AddMilliseconds(timeout);
         var progressDetected = false;
 

@@ -40,6 +40,7 @@ public static class Program
     public static WindowSession? CurrentWindowSession { get; set; }
     public static DesktopWindowManager? WindowManager { get; set; }
     public static string? LastOutput { get; set; }
+    public static AutomationEventService? EventService { get; set; }
 
     static Program()
     {
@@ -154,6 +155,10 @@ public static class Program
         Register(new ScreenshotRegionCommand());
         Register(new HighlightRegionCommand());
 
+        Register(new ListenStartCommand());
+        Register(new ListenStopCommand());
+        Register(new EventLogCommand());
+
         if (UiMap.TryLoadDefault() && Verbosity == "full")
             Console.Error.WriteLine($"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
     }
@@ -173,9 +178,15 @@ public static class Program
 
         var cleanArgs = ParseGlobalFlags(args);
 
-        if (cleanArgs.Length == 0)
+        if (cleanArgs.Length == 0 || (cleanArgs.Length == 1 && (cleanArgs[0] == "--help" || cleanArgs[0] == "-h" || cleanArgs[0] == "help")))
         {
             PrintHelp();
+            return 0;
+        }
+
+        if (cleanArgs.Length > 1 && (cleanArgs[0] == "--help" || cleanArgs[0] == "-h" || cleanArgs[0] == "help"))
+        {
+            PrintCommandHelp(cleanArgs[1]);
             return 0;
         }
 
@@ -213,6 +224,13 @@ public static class Program
             CurrentSession = session;
             CurrentWindowSession = session;
 
+            if (!UiMap.IsLoaded)
+            {
+                UiMap.TryLoadDefault();
+                if (UiMap.IsLoaded && Verbosity != "minimal")
+                    Console.Error.WriteLine($"[uimap] auto-loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
+            }
+
             SessionContext.ActiveHwnd = session.Process?.MainWindowHandle.ToInt64();
             SessionContext.ActivePid = session.Process?.Id;
             SessionContext.ActiveProcessName = session.Process?.ProcessName;
@@ -223,6 +241,8 @@ public static class Program
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
                 var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray(), Cts.Token);
+
+                if (EventService != null) { EventService.Dispose(); EventService = null; }
 
                 try { LastOutput = Console.Out?.ToString(); } catch (Exception ex) { LoggingService.Warn("Safe", $"LastOutput: {ex.Message}"); }
 
@@ -281,6 +301,24 @@ public static class Program
                 result.Add(args[i]);
         }
         return result.ToArray();
+    }
+
+    private static void PrintCommandHelp(string commandName)
+    {
+        var lower = commandName.ToLowerInvariant();
+        if (Aliases.TryGetValue(lower, out var resolved))
+            lower = resolved;
+
+        if (Commands.TryGetValue(lower, out var cmd))
+        {
+            Console.WriteLine($"Command: {cmd.Name}");
+            Console.WriteLine($"Description: {cmd.Description}");
+            Console.WriteLine($"Usage: {cmd.Usage}");
+        }
+        else
+        {
+            Console.Error.WriteLine($"Unknown command: {commandName}. Use --help to list all commands.");
+        }
     }
 
     private static void PrintHelp()
@@ -414,6 +452,11 @@ Commands (Revit-focused, work with --process-name or --pid):
   session-begin [--dialog <title>]      Start a stateful session (auto-tracks context)
   session-end                           End the current session
   session-status                        Show session context (dialog, tab, variables, stack)
+
+Event Listener (event-driven, < 100ms response instead of polling):
+  listen-start                          Start event-driven automation listener
+  listen-stop                           Stop event-driven automation listener
+  event-log [--last N]                  Show recent automation events
 
 Script file: one command per line, # for comments, empty lines skipped
   Directives: wait-for, wait-close, select, window, set, get-output

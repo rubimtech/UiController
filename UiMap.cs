@@ -51,6 +51,7 @@ public static class UiMap
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ReVibe", "UiController", "uimap.yaml")
     ];
 
+    public static UiMapConfig? Current => _config;
     public static bool IsLoaded => _config != null;
     public static string? CurrentPath { get; private set; }
     public static int EntryCount => _config?.Entries.Count ?? 0;

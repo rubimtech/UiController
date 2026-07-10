@@ -1,6 +1,9 @@
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenCvSharp;
+using RevitUiController.Models;
 using Point = OpenCvSharp.Point;
 
 namespace RevitUiController;
@@ -84,6 +87,31 @@ public static class CvMatchClient
                 return Path.GetFullPath(path);
         }
         return null;
+    }
+
+    public static string[] GetSearchPaths() => SearchPaths;
+
+    private static readonly JsonSerializerOptions MetaJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    public static TemplateMetadata? LoadTemplateMetadata(string templatePath)
+    {
+        var dir = Path.GetDirectoryName(templatePath);
+        var name = Path.GetFileNameWithoutExtension(templatePath);
+        var metaPath = Path.Combine(dir ?? ".", name + ".meta.json");
+        if (!File.Exists(metaPath))
+            return null;
+        try
+        {
+            var json = File.ReadAllText(metaPath);
+            return JsonSerializer.Deserialize<TemplateMetadata>(json, MetaJsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public static List<(string Name, string Path, long SizeKb)> FindTemplates(string? filter = null)

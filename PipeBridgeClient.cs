@@ -1,13 +1,14 @@
 using System.IO.Pipes;
 using System.Text;
+using System.Threading;
 
 namespace RevitUiController;
 
 public class PipeBridgeClient : IDisposable
 {
     private NamedPipeClientStream? _pipe;
-    private Thread? _heartbeatThread;
-    private volatile bool _running;
+    private CancellationTokenSource? _heartbeatCts;
+    private Task? _heartbeatTask;
     private readonly object _lock = new();
 
     public bool IsConnected => _pipe?.IsConnected ?? false;
@@ -100,23 +101,27 @@ public class PipeBridgeClient : IDisposable
 
     private void StartHeartbeat()
     {
-        _running = true;
-        _heartbeatThread = new Thread(() =>
+        _heartbeatCts = new CancellationTokenSource();
+        _heartbeatTask = HeartbeatLoopAsync(_heartbeatCts.Token);
+    }
+
+    private async Task HeartbeatLoopAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        try
         {
-            while (_running)
+            while (await timer.WaitForNextTickAsync(ct))
             {
-                Thread.Sleep(10000);
                 try { SendCommand("_heartbeat", new { pid = Environment.ProcessId }, 2000); }
                 catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge heartbeat: {ex.Message}"); break; }
             }
-        });
-        _heartbeatThread.IsBackground = true;
-        _heartbeatThread.Start();
+        }
+        catch (OperationCanceledException) { }
     }
 
     public void Disconnect()
     {
-        _running = false;
+        _heartbeatCts?.Cancel();
         try { SendCommand("_client_shutdown", new { }, 1000); } catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge disconnect: {ex.Message}"); }
         lock (_lock)
         {

@@ -20,7 +20,16 @@ public class WaitForCommand : ICommand
         var title = args[0];
         var timeout = args.Length > 1 && int.TryParse(args[1], out var t) ? t * 1000 : 15000;
         
-        var dialog = await Retry.WaitForDialog(revitWindow, title, timeout, ct: ct);
+        AutomationElement? dialog;
+        
+        if (Program.EventService is { IsListening: true })
+        {
+            dialog = await Program.EventService.WaitForDialogAsync(title, timeout, ct);
+        }
+        else
+        {
+            dialog = await Retry.WaitForDialog(revitWindow, title, timeout, ct: ct);
+        }
         
         if (dialog == null)
         {
@@ -60,7 +69,16 @@ public class WaitCloseCommand : ICommand
         var title = args[0];
         var timeout = args.Length > 1 && int.TryParse(args[1], out var t) ? t * 1000 : 15000;
         
-        var closed = await Retry.WaitForDialogClose(revitWindow, title, timeout, ct: ct);
+        bool closed;
+        
+        if (Program.EventService is { IsListening: true })
+        {
+            closed = await Program.EventService.WaitForDialogCloseAsync(title, timeout, ct);
+        }
+        else
+        {
+            closed = await Retry.WaitForDialogClose(revitWindow, title, timeout, ct: ct);
+        }
         
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
@@ -91,7 +109,16 @@ public class WaitForElementCommand : ICommand
         var timeoutArg = args.FirstOrDefault(a => int.TryParse(a, out _));
         var timeout = timeoutArg != null ? int.Parse(timeoutArg) * 1000 : 10000;
         
-        var element = await Retry.WaitForElement(revitWindow, name, timeout, ct: ct);
+        AutomationElement? element;
+        
+        if (Program.EventService is { IsListening: true })
+        {
+            element = await Program.EventService.WaitForElementAsync(name, timeout, ct);
+        }
+        else
+        {
+            element = await Retry.WaitForElement(revitWindow, name, timeout, ct: ct);
+        }
         
         if (element == null)
         {
