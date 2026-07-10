@@ -99,6 +99,10 @@ public static class Program
         Register(new RetryDialogCommand());
         Register(new AiFindCommand());
 
+        Register(new CvMatchCommand());
+        Register(new CvClickCommand());
+        Register(new CvListTemplatesCommand());
+
         Register(new UiMapLoadCommand());
         Register(new UiMapSaveCommand());
         Register(new UiMapResolveCommand());
@@ -274,6 +278,11 @@ Commands:
   process-list                          List running Revit processes
   process-info                          Show connected Revit process details
   ai-find <query> [--type <ct>]         Multi-strategy intelligent element search
+  cv-match <template.png> [--region]    Find template image via OpenCV MatchTemplate
+  cv-click <template.png>               Find template and click on match
+  cv-templates [filter]                 List available template images
+  llm-find <description> [--provider <p>]  Find UI element via LLM Vision (screenshot + AI)
+  llm-click <description> [--provider <p>]  Find and click via LLM Vision
   info                                  Show Revit window info
   uimap-load [path]                     Load UI Map from YAML file
   uimap-save [path]                     Save current UI Map config to YAML
@@ -281,6 +290,9 @@ Commands:
   uimap-register <name> --auto-id <id>  Register new UiMap entry
   uimap-list [filter]                   List registered UiMap entries
   uimap-auto <name> <element-name>      Auto-detect element and register entry
+  cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]  Find template image in Revit window via OpenCV
+  cv-click <template.png> [--threshold 0.8] [--region x,y,w,h]  Find template and click on match
+  cv-templates [filter]                  List available template images
   session-begin [--dialog <title>]      Start a stateful session (auto-tracks context)
   session-end                           End the current session
   session-status                        Show session context (dialog, tab, variables, stack)

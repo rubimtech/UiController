@@ -11,5 +11,7 @@
   <ItemGroup>
     <PackageReference Include="FlaUI.UIA3" />
     <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="OpenCvSharp4" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" />
   </ItemGroup>
 </Project>

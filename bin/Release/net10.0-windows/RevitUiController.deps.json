@@ -6,9 +6,11 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "RevitUiController/0.28.5.0664": {
+      "RevitUiController/0.28.5.0680": {
         "dependencies": {
           "FlaUI.UIA3": "4.0.0",
+          "OpenCvSharp4": "4.10.0.20241107",
+          "OpenCvSharp4.runtime.win": "4.10.0.20241107",
           "YamlDotNet": "18.1.0"
         },
         "runtime": {
@@ -46,6 +48,38 @@
           }
         }
       },
+      "OpenCvSharp4/4.10.0.20241107": {
+        "runtime": {
+          "lib/net6.0/OpenCvSharp.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "OpenCvSharp4.runtime.win/4.10.0.20241107": {
+        "runtimeTargets": {
+          "runtimes/win-x64/native/OpenCvSharpExtern.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/opencv_videoio_ffmpeg4100_64.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "2024.5.0.0"
+          },
+          "runtimes/win-x86/native/OpenCvSharpExtern.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/opencv_videoio_ffmpeg4100.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "2024.5.0.0"
+          }
+        }
+      },
       "System.Management/5.0.0": {
         "runtime": {
           "lib/netstandard2.0/System.Management.dll": {
@@ -73,7 +107,7 @@
     }
   },
   "libraries": {
-    "RevitUiController/0.28.5.0664": {
+    "RevitUiController/0.28.5.0680": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -98,6 +132,20 @@
       "sha512": "sha512-Me5vKNZ1JSg6txTsPQXaWx7fVNh+fmcUPPwtDKJtqvbMM0N8aoa/l/QPolkJIRnasCabCNt4v2zG4p1Q9HU98A==",
       "path": "interop.uiautomationclient/10.19041.0",
       "hashPath": "interop.uiautomationclient.10.19041.0.nupkg.sha512"
+    },
+    "OpenCvSharp4/4.10.0.20241107": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-FJcU9AohcZ9jSjrw++1+XzbjPEAbzZa7e2FNDQ7VfPU9IGTKMiAIOMSyiDj4IsnxzlObhk5TuIMzab2PLtvYhA==",
+      "path": "opencvsharp4/4.10.0.20241107",
+      "hashPath": "opencvsharp4.4.10.0.20241107.nupkg.sha512"
+    },
+    "OpenCvSharp4.runtime.win/4.10.0.20241107": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mIZLE3J03MKuMQxqEE6Q/0s2HotnvDn4KbcvflR94EYdJwEg9zUOQYPz0MH0eYitHIzw90a9zfmk7mgMDBRhHA==",
+      "path": "opencvsharp4.runtime.win/4.10.0.20241107",
+      "hashPath": "opencvsharp4.runtime.win.4.10.0.20241107.nupkg.sha512"
     },
     "System.Management/5.0.0": {
       "type": "package",
