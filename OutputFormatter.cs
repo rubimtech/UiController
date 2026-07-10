@@ -26,7 +26,7 @@ public static class OutputFormatter
         var json = pretty
             ? JsonSerializer.Serialize(result, PrettyJsonOptions)
             : JsonSerializer.Serialize(result, JsonOptions) + Environment.NewLine;
-        try { Program.LastOutput = json; } catch { }
+        try { Program.LastOutput = json; } catch (Exception ex) { LoggingService.Warn("Safe", $"FormatResult: {ex.Message}"); }
         return json;
     }
 
@@ -56,7 +56,7 @@ public static class OutputFormatter
             Enabled = el.IsEnabled,
             Visible = el.IsOffscreen == false,
         };
-        try { var r = el.BoundingRectangle; info.BoundingRect = new RectInfo(r.X, r.Y, r.Width, r.Height); } catch { }
+        try { var r = el.BoundingRectangle; info.BoundingRect = new RectInfo(r.X, r.Y, r.Width, r.Height); } catch (Exception ex) { LoggingService.Warn("Safe", $"FromAutomationElement rect: {ex.Message}"); }
         if (depth < maxDepth)
         {
             try
@@ -72,7 +72,7 @@ public static class OutputFormatter
                 if (children.Count > 0)
                     info.Children = children;
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"FromAutomationElement children: {ex.Message}"); }
         }
         return info;
     }

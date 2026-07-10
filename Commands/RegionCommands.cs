@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class ScreenshotRegionCommand : ICommand
     public string Description => "Capture a screenshot of a specific screen region. Usage: screenshot-region <x> <y> <w> <h>";
     public string Usage => "screenshot-region <x> <y> <w> <h>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 4)
         {
@@ -42,7 +43,7 @@ public class HighlightRegionCommand : ICommand
     public string Description => "Highlight a screen region with a colored overlay. Usage: highlight-region <x> <y> <w> <h> [ms]";
     public string Usage => "highlight-region <x> <y> <w> <h> [ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 4)
         {

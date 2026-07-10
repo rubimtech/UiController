@@ -1,6 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
-
+using System.Threading;
 namespace RevitUiController.Commands;
 
 public class SafetyCheckCommand : ICommand
@@ -9,10 +9,10 @@ public class SafetyCheckCommand : ICommand
     public string Description => "Check for unexpected warning dialogs";
     public string Usage => "safety-check";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var unexpected = SafetyGuard.FindUnexpectedDialogs(revitWindow);
-        SafetyGuard.DismissWarningDialogs(revitWindow);
+        await SafetyGuard.DismissWarningDialogs(revitWindow, ct);
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
@@ -21,7 +21,7 @@ public class SafetyCheckCommand : ICommand
             Error = unexpected.Count > 0 ? $"Dismissed {unexpected.Count} unexpected dialog(s)" : null,
             Data = new { unexpectedDialogsFound = unexpected.Count, dismissed = true }
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -31,7 +31,7 @@ public class RevitRestartCommand : ICommand
     public string Description => "Check Revit process health and restart if needed";
     public string Usage => "revit-restart [--path <exe-path>] [--pid <number>] [--process-name <name>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var process = SafetyGuard.GetRevitProcess();
         var isAlive = SafetyGuard.IsRevitProcessAlive(process);
@@ -59,7 +59,7 @@ public class RevitRestartCommand : ICommand
                 Success = true,
                 Data = new { action = "none", reason = "already_running", pid = process?.Id }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         Console.WriteLine("Revit is not running. Starting...");
@@ -73,10 +73,10 @@ public class RevitRestartCommand : ICommand
                 Success = false,
                 Error = "Failed to start Revit process"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
-        var ready = SafetyGuard.WaitForRevitReady(120000);
+        var ready = await SafetyGuard.WaitForRevitReady(120000, ct);
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
@@ -85,6 +85,6 @@ public class RevitRestartCommand : ICommand
             Error = ready ? null : "Revit started but did not become ready within 120s",
             Data = new { action = "started", pid = started.Id, ready }
         }, Program.IsPretty));
-        return Task.FromResult(ready ? 0 : 1);
+        return ready ? 0 : 1;
     }
 }

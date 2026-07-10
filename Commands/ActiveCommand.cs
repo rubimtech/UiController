@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class ActiveCommand : ICommand
     public string Description => "Show info about the currently active/foreground window and its monitor";
     public string Usage => "active";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var mgr = Program.WindowManager;
         if (mgr == null)

@@ -28,7 +28,7 @@ public static class ScreenshotHelper
             var r = window.BoundingRectangle;
             return CaptureBitmap((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height);
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"CaptureBitmap window: {ex.Message}"); return null; }
     }
 
     public static Bitmap? CaptureBitmap(int x, int y, int width, int height)
@@ -36,15 +36,24 @@ public static class ScreenshotHelper
         try
         {
             var bitmap = new Bitmap(width, height);
-            using var g = Graphics.FromImage(bitmap);
-            var hdc1 = g.GetHdc();
-            var hdc2 = GetWindowDC(GetDesktopWindow());
-            BitBlt(hdc1, 0, 0, width, height, hdc2, x, y, SRCCOPY);
-            ReleaseDC(GetDesktopWindow(), hdc2);
-            g.ReleaseHdc(hdc1);
-            return bitmap;
+            var g = Graphics.FromImage(bitmap);
+            IntPtr hdc1 = IntPtr.Zero;
+            IntPtr hdc2 = IntPtr.Zero;
+            try
+            {
+                hdc1 = g.GetHdc();
+                hdc2 = GetWindowDC(GetDesktopWindow());
+                BitBlt(hdc1, 0, 0, width, height, hdc2, x, y, SRCCOPY);
+                return bitmap;
+            }
+            finally
+            {
+                if (hdc2 != IntPtr.Zero) ReleaseDC(GetDesktopWindow(), hdc2);
+                if (hdc1 != IntPtr.Zero) g.ReleaseHdc(hdc1);
+                g.Dispose();
+            }
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"CaptureBitmap region: {ex.Message}"); return null; }
     }
 
     public static string? CaptureBase64(int x, int y, int width, int height)
@@ -52,19 +61,29 @@ public static class ScreenshotHelper
         try
         {
             using var bitmap = new Bitmap(width, height);
-            using var g = Graphics.FromImage(bitmap);
-            var hdc1 = g.GetHdc();
-            var hdc2 = GetWindowDC(GetDesktopWindow());
-            BitBlt(hdc1, 0, 0, width, height, hdc2, x, y, SRCCOPY);
-            ReleaseDC(GetDesktopWindow(), hdc2);
-            g.ReleaseHdc(hdc1);
+            var g = Graphics.FromImage(bitmap);
+            IntPtr hdc1 = IntPtr.Zero;
+            IntPtr hdc2 = IntPtr.Zero;
+            try
+            {
+                hdc1 = g.GetHdc();
+                hdc2 = GetWindowDC(GetDesktopWindow());
+                BitBlt(hdc1, 0, 0, width, height, hdc2, x, y, SRCCOPY);
+            }
+            finally
+            {
+                if (hdc2 != IntPtr.Zero) ReleaseDC(GetDesktopWindow(), hdc2);
+                if (hdc1 != IntPtr.Zero) g.ReleaseHdc(hdc1);
+                g.Dispose();
+            }
 
             using var ms = new MemoryStream();
             bitmap.Save(ms, ImageFormat.Png);
             return Convert.ToBase64String(ms.ToArray());
         }
-        catch
+        catch (Exception ex)
         {
+            LoggingService.Warn("Safe", $"CaptureBase64: {ex.Message}");
             return null;
         }
     }
@@ -76,7 +95,7 @@ public static class ScreenshotHelper
             var r = window.BoundingRectangle;
             return CaptureBase64((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height);
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"CaptureWindow: {ex.Message}"); return null; }
     }
 
     public static string? CaptureRegion(int x, int y, int w, int h)

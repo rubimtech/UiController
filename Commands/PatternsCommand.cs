@@ -1,6 +1,7 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class PatternsCommand : ICommand
     public string Description => "Show all available UIA patterns for an element (ValuePattern, TogglePattern, ExpandCollapse, SelectionItem, Grid, Table, Scroll, RangeValue, Window, Text, etc.)";
     public string Usage => "patterns <name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var name = string.Join(" ", args);
         if (string.IsNullOrEmpty(name))

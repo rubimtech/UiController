@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class TreeExpandCommand : ICommand
     public string Description => "Expand a TreeView node and dump its subtree. Usage: tree-expand <name> [--all]";
     public string Usage => "tree-expand <name> [--all] [--depth N]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

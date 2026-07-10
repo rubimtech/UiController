@@ -10,7 +10,7 @@ public class HighlightCommand : ICommand
     public string Description => "Highlight an element on screen: highlight <name> [duration-ms]";
     public string Usage => "highlight <element-name> [duration-ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -45,7 +45,7 @@ public class HighlightClearCommand : ICommand
     public string Description => "Clear any active highlight overlay";
     public string Usage => "highlight-clear";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         HighlightHelper.Clear();
         Console.Write(OutputFormatter.FormatResult(new CommandResult

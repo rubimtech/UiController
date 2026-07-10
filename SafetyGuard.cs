@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using static RevitUiController.AutomationHelper;
@@ -26,12 +27,36 @@ public static class SafetyGuard
         return DestructivePatterns.Any(p => combined.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static bool ConfirmDestructiveAction(string description)
+    public static bool IsNonInteractive { get; set; }
+
+    public static bool ConfirmDestructiveAction(string description, int timeoutSeconds = 10)
     {
         Console.Error.WriteLine($"[SAFETY] Destructive action detected: {description}");
+
+        if (IsNonInteractive || !Environment.UserInteractive)
+        {
+            Console.Error.WriteLine("[SAFETY] Non-interactive mode — rejecting.");
+            return false;
+        }
+
         Console.Error.WriteLine("[SAFETY] Confirm? Type 'yes' to proceed, anything else to cancel:");
-        var input = Console.ReadLine();
-        return input != null && input.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase);
+
+        try
+        {
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            var task = Task.Run(() => Console.ReadLine() ?? "", cts.Token);
+            if (task.Wait(timeoutSeconds * 1000, cts.Token))
+            {
+                var input = task.Result;
+                return input.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.Error.WriteLine("[SAFETY] Timeout — rejecting.");
+        }
+
+        return false;
     }
 
     public static List<AutomationElement> FindUnexpectedDialogs(AutomationElement revitWindow)
@@ -49,14 +74,14 @@ public static class SafetyGuard
                         continue;
                     unexpected.Add(d);
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindUnexpectedDialogs inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindUnexpectedDialogs outer: {ex.Message}"); }
         return unexpected;
     }
 
-    public static void DismissWarningDialogs(AutomationElement revitWindow)
+    public static async Task DismissWarningDialogs(AutomationElement revitWindow, CancellationToken ct = default)
     {
         var dialogs = FindActiveDialogs(revitWindow);
         foreach (var d in dialogs)
@@ -83,16 +108,16 @@ public static class SafetyGuard
                                 if (c.IsEnabled)
                                 {
                                     c.Click();
-                                    Thread.Sleep(500);
+                                    await Task.Delay(500, ct);
                                 }
                                 break;
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { LoggingService.Warn("Safe", $"DismissWarningDialogs button click: {ex.Message}"); }
                 }
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"DismissWarningDialogs inner: {ex.Message}"); }
         }
     }
 
@@ -100,7 +125,7 @@ public static class SafetyGuard
     {
         if (process == null) return false;
         try { return !process.HasExited; }
-        catch { return false; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"IsRevitProcessAlive: {ex.Message}"); return false; }
     }
 
     public static Process? GetRevitProcess()
@@ -143,15 +168,16 @@ public static class SafetyGuard
         }
     }
 
-    public static bool WaitForRevitReady(int timeoutMs = 120000)
+    public static async Task<bool> WaitForRevitReady(int timeoutMs = 120000, CancellationToken ct = default)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
         while (DateTime.UtcNow < deadline)
         {
+            ct.ThrowIfCancellationRequested();
             var process = GetRevitProcess();
             if (process != null && process.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(process.MainWindowTitle))
                 return true;
-            Thread.Sleep(2000);
+            await Task.Delay(2000, ct);
         }
         return false;
     }

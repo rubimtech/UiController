@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class LlmFindCommand : ICommand
     public string Description => "Find UI element by description using LLM Vision on a screenshot";
     public string Usage => "llm-find <description> [--region x,y,w,h] [--provider <p>] [--model <m>] [--timeout <s>]";
 
-    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -165,7 +166,7 @@ public class LlmClickCommand : ICommand
     public string Description => "Find element by description and click on it via LLM Vision";
     public string Usage => "llm-click <description> [--region x,y,w,h] [--provider <p>] [--model <m>]";
 
-    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -280,8 +281,8 @@ public class LlmClickCommand : ICommand
 
         var beforeState = OutputFormatter.CaptureState(revitWindow);
 
-        MouseControl.ClickAt(elementX, elementY);
-        Thread.Sleep(300);
+        await MouseControl.ClickAt(elementX, elementY, ct);
+        await Task.Delay(300, ct);
 
         var afterState = OutputFormatter.CaptureState(revitWindow);
         var diff = OutputFormatter.ComputeDiff(beforeState, afterState);

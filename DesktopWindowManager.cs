@@ -14,17 +14,17 @@ public class DesktopWindowManager : IDisposable
         ActiveTracker = new ActiveWindowTracker();
     }
 
-    public WindowSession? ResolveTarget(WindowQuery query, int timeoutSec = 30)
+    public async Task<WindowSession?> ResolveTarget(WindowQuery query, int timeoutSec = 30, CancellationToken ct = default)
     {
         CurrentSession?.Dispose();
-        CurrentSession = WindowSession.Resolve(query, timeoutSec);
+        CurrentSession = await WindowSession.Resolve(query, timeoutSec, ct);
         return CurrentSession;
     }
 
-    public WindowSession? ResolveActive()
+    public async Task<WindowSession?> ResolveActive(CancellationToken ct = default)
     {
         CurrentSession?.Dispose();
-        CurrentSession = WindowSession.ConnectToActive();
+        CurrentSession = await WindowSession.ConnectToActive(ct: ct);
         return CurrentSession;
     }
 

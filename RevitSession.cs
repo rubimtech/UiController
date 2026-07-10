@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
@@ -6,6 +7,7 @@ using FlaUI.UIA3;
 
 namespace RevitUiController;
 
+[Obsolete("Use WindowSession instead.")]
 public class RevitSession : IDisposable
 {
     public UIA3Automation Automation { get; }
@@ -21,20 +23,20 @@ public class RevitSession : IDisposable
         TargetPid = targetPid;
     }
 
-    public static RevitSession? Connect(int? targetPid = null, string processName = "Revit", int timeoutSec = 30)
+    public static async Task<RevitSession?> Connect(int? targetPid = null, string processName = "Revit", int timeoutSec = 30, CancellationToken ct = default)
     {
         Process? process = null;
         var deadline = DateTime.UtcNow.AddSeconds(timeoutSec);
 
         if (targetPid.HasValue)
         {
-            process = FindProcessByPid(targetPid.Value, processName, deadline);
+            process = await FindProcessByPid(targetPid.Value, processName, deadline, ct);
             if (process == null)
                 return null;
         }
         else
         {
-            process = FindFirstProcess(processName, deadline);
+            process = await FindFirstProcess(processName, deadline, ct);
             if (process == null)
                 return null;
         }
@@ -59,14 +61,14 @@ public class RevitSession : IDisposable
         return null;
     }
 
-    private static Process? FindProcessByPid(int pid, string processName, DateTime deadline)
+    private static async Task<Process?> FindProcessByPid(int pid, string processName, DateTime deadline, CancellationToken ct = default)
     {
         try
         {
             var p = Process.GetProcessById(pid);
             if (p.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase))
             {
-                if (WaitForMainWindow(p, deadline))
+                if (await WaitForMainWindow(p, deadline, ct))
                     return p;
             }
             else
@@ -82,19 +84,20 @@ public class RevitSession : IDisposable
 
         while (DateTime.UtcNow < deadline)
         {
+            ct.ThrowIfCancellationRequested();
             try
             {
                 var p = Process.GetProcessById(pid);
                 if (p.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (WaitForMainWindow(p, deadline))
+                    if (await WaitForMainWindow(p, deadline, ct))
                         return p;
                 }
-                Thread.Sleep(500);
+                await Task.Delay(500, ct);
             }
             catch (ArgumentException)
             {
-                Thread.Sleep(500);
+                await Task.Delay(500, ct);
             }
         }
 
@@ -102,7 +105,7 @@ public class RevitSession : IDisposable
         return null;
     }
 
-    private static Process? FindFirstProcess(string processName, DateTime deadline)
+    private static async Task<Process?> FindFirstProcess(string processName, DateTime deadline, CancellationToken ct = default)
     {
         var processes = Process.GetProcessesByName(processName)
             .Where(p => p.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(p.MainWindowTitle))
@@ -114,7 +117,8 @@ public class RevitSession : IDisposable
 
         while (DateTime.UtcNow < deadline)
         {
-            Thread.Sleep(500);
+            ct.ThrowIfCancellationRequested();
+            await Task.Delay(500, ct);
             processes = Process.GetProcessesByName(processName)
                 .Where(p => p.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(p.MainWindowTitle))
                 .OrderByDescending(p => p.MainWindowTitle.Length)
@@ -127,17 +131,18 @@ public class RevitSession : IDisposable
         return null;
     }
 
-    private static bool WaitForMainWindow(Process process, DateTime deadline)
+    private static async Task<bool> WaitForMainWindow(Process process, DateTime deadline, CancellationToken ct = default)
     {
         if (process.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(process.MainWindowTitle))
             return true;
 
         while (DateTime.UtcNow < deadline)
         {
+            ct.ThrowIfCancellationRequested();
             process.Refresh();
             if (process.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(process.MainWindowTitle))
                 return true;
-            Thread.Sleep(500);
+            await Task.Delay(500, ct);
         }
 
         return false;
@@ -149,7 +154,7 @@ public class RevitSession : IDisposable
         {
             MainWindow = Automation.FromHandle(Process.MainWindowHandle);
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"RefreshWindow: {ex.Message}"); }
     }
 
     public void Dispose()

@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class CacheFindCommand : ICommand
     public string Description => "Find control by name with caching (faster on repeated calls)";
     public string Usage => "cached-find <name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -54,7 +55,7 @@ public class CacheClearCommand : ICommand
     public string Description => "Clear element cache";
     public string Usage => "cache-clear";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var before = ElementCache.Count;
         ElementCache.InvalidateAll();
@@ -74,7 +75,7 @@ public class CacheStatsCommand : ICommand
     public string Description => "Show element cache statistics";
     public string Usage => "cache-stats";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {

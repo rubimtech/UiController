@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class WatchCommand : ICommand
     public string Description => "Poll a command until a condition is met. Usage: watch <command> [args...] --interval <sec> --until <found|gone|enabled|disabled|text:substring> [--timeout <sec>]";
     public string Usage => "watch <command> [args...] --interval <sec> --until <condition> [--timeout <sec>]";
 
-    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2)
         {

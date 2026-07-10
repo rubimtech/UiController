@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class RetryClickCommand : ICommand
     public string Description => "Find and click with exponential backoff retry: retry-click <name> [--attempts N] [--delay Ms]";
     public string Usage => "retry-click <name> [--attempts N] [--delay Ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -63,7 +64,7 @@ public class RetryDialogCommand : ICommand
     public string Description => "Wait for dialog with retry: retry-dialog <title> [--attempts N] [--delay Ms]";
     public string Usage => "retry-dialog <title> [--attempts N] [--delay Ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

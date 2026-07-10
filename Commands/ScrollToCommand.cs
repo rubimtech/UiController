@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,12 +10,12 @@ public class ScrollToCommand : ICommand
     public string Description => "Scroll to bring an element into view (ScrollIntoView). Usage: scroll-to <name> [--parent <p>]";
     public string Usage => "scroll-to <name> [--parent <p>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: scroll-to <name> [--parent <p>]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         string? parentFilter = null;
@@ -33,7 +34,7 @@ public class ScrollToCommand : ICommand
             if (scope == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", parentFilter, ["parent"], Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
         }
 
@@ -41,7 +42,7 @@ public class ScrollToCommand : ICommand
         if (element == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var success = false;
@@ -52,7 +53,7 @@ public class ScrollToCommand : ICommand
             {
                 scrollItem.ScrollIntoView();
                 success = true;
-                Thread.Sleep(200);
+                await Task.Delay(200, ct);
             }
             else
             {
@@ -65,7 +66,7 @@ public class ScrollToCommand : ICommand
                     {
                         parentScrollItem.ScrollIntoView();
                         success = true;
-                        Thread.Sleep(200);
+                        await Task.Delay(200, ct);
                     }
                 }
             }
@@ -95,6 +96,6 @@ public class ScrollToCommand : ICommand
             }
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(success ? 0 : 1);
+        return success ? 0 : 1;
     }
 }

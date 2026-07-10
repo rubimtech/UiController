@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class ProcessListCommand : ICommand
     public string Description => "List running Revit processes with window handles";
     public string Usage => "process-list";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var processNames = new[] { "Revit", "RevitDBG", "RevitRCL" };
         var processes = new List<object>();
@@ -61,7 +62,7 @@ public class ProcessInfoCommand : ICommand
     public string Description => "Show detailed info about connected Revit process";
     public string Usage => "process-info";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var session = Program.CurrentSession;
         if (session?.Process == null)

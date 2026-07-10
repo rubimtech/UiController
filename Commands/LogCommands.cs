@@ -1,4 +1,6 @@
 using RevitUiController.Models;
+using System.Threading;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -8,7 +10,7 @@ public class LogsCommand : ICommand
     public string Description => "Read RevitUiController or revitCopilot logs";
     public string Usage => "logs [--tail N] [--since HH:mm] [--level Error] [--plugin]";
 
-    public Task<int> ExecuteAsync(FlaUI.Core.AutomationElements.AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(FlaUI.Core.AutomationElements.AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         int tail = 50;
         string? level = null;
@@ -61,7 +63,7 @@ public class DryRunCommand : ICommand
     public string Description => "Execute a .rvs script in dry-run mode (show steps, no actual clicks)";
     public string Usage => "dry-run <script-path>";
 
-    public Task<int> ExecuteAsync(FlaUI.Core.AutomationElements.AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(FlaUI.Core.AutomationElements.AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

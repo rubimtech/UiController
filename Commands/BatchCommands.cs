@@ -12,12 +12,12 @@ public class PropertySheetBatchCommand : ICommand
     public string Description => "Fill multiple fields in a PropertySheet dialog from JSON";
     public string Usage => "ps-batch <dialog-title> <json-payload> [--tab <tab-name>] [--timeout <sec>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2)
         {
             Console.Error.WriteLine("Usage: ps-batch <dialog-title> <json-payload> [--tab <tab-name>] [--timeout <sec>]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var dialogTitle = args[0];
@@ -42,7 +42,7 @@ public class PropertySheetBatchCommand : ICommand
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         Dictionary<string, JsonElement>? fields;
@@ -57,7 +57,7 @@ public class PropertySheetBatchCommand : ICommand
                     Success = false,
                     Error = "JSON payload is empty or invalid"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             fields = parsed;
         }
@@ -69,7 +69,7 @@ public class PropertySheetBatchCommand : ICommand
                 Success = false,
                 Error = $"Failed to parse JSON payload: {ex.Message}"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (targetTab != null)
@@ -83,7 +83,7 @@ public class PropertySheetBatchCommand : ICommand
                     Success = false,
                     Error = $"Tab '{targetTab}' not found in dialog"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
         }
 
@@ -135,7 +135,7 @@ public class PropertySheetBatchCommand : ICommand
             {
                 if (progressWasVisible)
                     break;
-                Thread.Sleep(500);
+                await Task.Delay(500, ct);
                 continue;
             }
             progressWasVisible = true;
@@ -146,7 +146,7 @@ public class PropertySheetBatchCommand : ICommand
                     break;
             }
             catch { }
-            Thread.Sleep(500);
+            await Task.Delay(500, ct);
         }
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -165,7 +165,7 @@ public class PropertySheetBatchCommand : ICommand
             }
         }, Program.IsPretty));
 
-        return Task.FromResult(failures.Count == 0 ? 0 : 1);
+        return failures.Count == 0 ? 0 : 1;
     }
 
     private static AutomationElement? FindActiveDialog(AutomationElement root, string name)

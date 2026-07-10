@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class UiMapLoadCommand : ICommand
     public string Description => "Load UI Map from YAML file";
     public string Usage => "uimap-load [path]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var path = args.Length > 0 ? string.Join(" ", args) : "";
 
@@ -44,7 +45,7 @@ public class UiMapSaveCommand : ICommand
     public string Description => "Save current UI Map config to YAML file";
     public string Usage => "uimap-save [path]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var path = args.Length > 0 ? string.Join(" ", args) : UiMap.CurrentPath ?? "./uimap.yaml";
 
@@ -76,7 +77,7 @@ public class UiMapResolveCommand : ICommand
     public string Description => "Resolve a logical name to candidate selectors";
     public string Usage => "uimap-resolve <logical-name> [--version 2026]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -143,7 +144,7 @@ public class UiMapRegisterCommand : ICommand
     public string Description => "Register a new UI Map entry";
     public string Usage => "uimap-register <logical-name> --auto-id <id> [--name <name>] [--tab <tab>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -218,7 +219,7 @@ public class UiMapListCommand : ICommand
     public string Description => "List all registered UI Map entries";
     public string Usage => "uimap-list [filter]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (!UiMap.IsLoaded)
         {
@@ -263,7 +264,7 @@ public class UiMapAutoCommand : ICommand
     public string Description => "Find element by name, auto-extract selector info, and register a new UiMap entry";
     public string Usage => "uimap-auto <logical-name> <element-name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2)
         {

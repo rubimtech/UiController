@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class FindAllCommand : ICommand
     public string Description => "Find ALL controls matching a name, not just the first one. Usage: find-all <name> [--max N] [--type <ct>]";
     public string Usage => "find-all <name> [--max N] [--type <ct>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

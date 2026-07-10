@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class Win32ClickCommand : ICommand
     public string Description => "Click a control via Win32 SendMessage fallback: win32-click <name>";
     public string Usage => "win32-click <name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -64,7 +65,7 @@ public class Win32EnumCommand : ICommand
     public string Description => "Enumerate Win32 child windows of Revit main window";
     public string Usage => "win32-enum";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         try
         {

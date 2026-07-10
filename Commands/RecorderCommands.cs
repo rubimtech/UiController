@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class RecordStartCommand : ICommand
     public string Description => "Start recording actions to an .rvs script: record-start <output-path>";
     public string Usage => "record-start <output-path>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -38,7 +39,7 @@ public class RecordStopCommand : ICommand
     public string Description => "Stop recording and save .rvs script";
     public string Usage => "record-stop";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (!RecorderService.IsRecording)
         {
@@ -69,7 +70,7 @@ public class RecordStatusCommand : ICommand
     public string Description => "Show recording status";
     public string Usage => "record-status";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
@@ -87,7 +88,7 @@ public class RecordSaveCommand : ICommand
     public string Description => "Save current recording, optionally showing diff against existing file";
     public string Usage => "record-save [--path <file.rvs>] [--diff]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (!RecorderService.IsRecording)
         {

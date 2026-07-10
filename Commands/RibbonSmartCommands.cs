@@ -11,7 +11,7 @@ public class RibbonFindCommand : ICommand
     public string Description => "Find ribbon tab/panel/button by name with exact location";
     public string Usage => "ribbon-find <tab-name> [panel-name [button-name]]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -20,7 +20,7 @@ public class RibbonFindCommand : ICommand
         if (mMainTabs == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var tabName = args[0];
@@ -29,12 +29,12 @@ public class RibbonFindCommand : ICommand
         {
             var suggestions = GetTabNames(mMainTabs);
             Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var (tabFoundName, tabFoundElement) = tabResult.Value;
         TryClick(tabFoundElement, tabFoundName);
-        Thread.Sleep(500);
+        await Task.Delay(500, ct);
 
         if (args.Length == 1)
         {
@@ -55,7 +55,7 @@ public class RibbonFindCommand : ICommand
                 DurationMs = elapsed
             };
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var panelName = args[1];
@@ -67,7 +67,7 @@ public class RibbonFindCommand : ICommand
         if (panel.panelName == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", $"panel '{panelName}'", panels.Select(p => p.panelName).ToList(), Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (args.Length == 2)
@@ -88,7 +88,7 @@ public class RibbonFindCommand : ICommand
                 DurationMs = elapsed
             };
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var buttonName = args[2];
@@ -96,7 +96,7 @@ public class RibbonFindCommand : ICommand
         if (matchedBtn.btnName == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", panel.buttons.Select(b => b.btnName).ToList(), Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var elapsed2 = (DateTime.UtcNow - start).TotalMilliseconds;
@@ -113,7 +113,7 @@ public class RibbonFindCommand : ICommand
             DurationMs = elapsed2
         };
         Console.Write(OutputFormatter.FormatResult(result2, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static (string name, AutomationElement element)? FindTab(AutomationElement mMainTabs, string searchName)
@@ -333,14 +333,14 @@ public class DropDownCommand : ICommand
     public string Description => "Open a ribbon SplitButton/DropDownButton and select an item";
     public string Usage => "dropdown <button-name> <item-name> [tab-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
         if (args.Length < 2)
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "dropdown <button-name> <item-name> [tab-name]", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var buttonName = args[0];
@@ -354,10 +354,10 @@ public class DropDownCommand : ICommand
             if (tab == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             TryClick(tab, tabName);
-            Thread.Sleep(300);
+            await Task.Delay(300, ct);
             button = FindFirstEnabledVisible(revitWindow, buttonName);
         }
         else
@@ -368,7 +368,7 @@ public class DropDownCommand : ICommand
         if (button == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
@@ -376,22 +376,22 @@ public class DropDownCommand : ICommand
         if (!TryClick(button, buttonName))
         {
             Console.Write(OutputFormatter.FormatError("ClickFailed", buttonName, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
-        Thread.Sleep(500);
+        await Task.Delay(500, ct);
 
         var dropdownItem = FindFirstEnabledVisible(revitWindow, itemName);
         if (dropdownItem == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", $"dropdown item '{itemName}'", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (!TryClick(dropdownItem, itemName))
         {
             Console.Write(OutputFormatter.FormatError("ClickFailed", itemName, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var after = OutputFormatter.CaptureState(revitWindow);
@@ -411,7 +411,7 @@ public class DropDownCommand : ICommand
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -421,7 +421,7 @@ public class ContextTabsCommand : ICommand
     public string Description => "List currently visible contextual ribbon tabs";
     public string Usage => "context-tabs";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -430,7 +430,7 @@ public class ContextTabsCommand : ICommand
         if (mMainTabs == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var contextualTabs = new List<object>();
@@ -468,7 +468,7 @@ public class ContextTabsCommand : ICommand
             DurationMs = elapsed
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static AutomationElement? FindChildByAutoId(AutomationElement[] children, string autoId)
@@ -487,7 +487,7 @@ public class QatCommand : ICommand
     public string Description => "List or click Quick Access Toolbar buttons";
     public string Usage => "qat [click <button-name>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -495,7 +495,7 @@ public class QatCommand : ICommand
         if (qat == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "Quick Access Toolbar (mQAT)", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var buttons = new List<object>();
@@ -533,7 +533,7 @@ public class QatCommand : ICommand
             if (targetButton == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", $"QAT button '{targetName}'", buttons.Select(b => { var d = (IDictionary<string, object>)b; return d["name"]?.ToString() ?? ""; }).ToList(), Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var dict2 = (IDictionary<string, object>)targetButton;
@@ -555,7 +555,7 @@ public class QatCommand : ICommand
             if (targetEl == null || !TryClick(targetEl, nameStr))
             {
                 Console.Write(OutputFormatter.FormatError("ClickFailed", nameStr, null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var after = OutputFormatter.CaptureState(revitWindow);
@@ -575,7 +575,7 @@ public class QatCommand : ICommand
             if (Program.IsScreenshot)
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var elapsed2 = (DateTime.UtcNow - start).TotalMilliseconds;
@@ -589,7 +589,7 @@ public class QatCommand : ICommand
             DurationMs = elapsed2
         };
         Console.Write(OutputFormatter.FormatResult(result2, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static AutomationElement? FindQat(AutomationElement revitWindow)
@@ -641,14 +641,14 @@ public class RibbonPanelCommand : ICommand
     public string Description => "Show buttons in a specific ribbon panel";
     public string Usage => "ribbon-panel <tab-name> [panel-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
         if (args.Length == 0)
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "ribbon-panel <tab-name> [panel-name]", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var tabName = args[0];
@@ -658,7 +658,7 @@ public class RibbonPanelCommand : ICommand
         if (mMainTabs == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var tab = FindTabButton(mMainTabs, tabName);
@@ -666,11 +666,11 @@ public class RibbonPanelCommand : ICommand
         {
             var suggestions = GetTabButtonNames(mMainTabs);
             Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         TryClick(tab, tabName);
-        Thread.Sleep(1000);
+        await Task.Delay(1000, ct);
 
         var freshRoot = SafeGetChildren(revitWindow, 20000);
         var freshMMainTabs = FindChildByAutoId(freshRoot, "mMainTabs");
@@ -693,7 +693,7 @@ public class RibbonPanelCommand : ICommand
             DurationMs = elapsed
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static AutomationElement? FindChildByAutoId(AutomationElement[] children, string autoId)

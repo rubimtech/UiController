@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,12 +10,12 @@ public class CvMatchCommand : ICommand
     public string Description => "Find a template image in the Revit window using OpenCV";
     public string Usage => "cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var templateName = args[0];
@@ -47,14 +48,14 @@ public class CvMatchCommand : ICommand
         {
             Console.Write(OutputFormatter.FormatError("TemplateNotFound", templateName,
                 ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         using var template = CvMatchClient.LoadTemplate(templatePath);
         if (template == null)
         {
             Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         Bitmap? screenshot;
@@ -72,7 +73,7 @@ public class CvMatchCommand : ICommand
             if (screenshot == null)
             {
                 Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             try
             {
@@ -90,7 +91,7 @@ public class CvMatchCommand : ICommand
         if (screenshot == null)
         {
             Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "region", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         using (screenshot)
@@ -114,7 +115,7 @@ public class CvMatchCommand : ICommand
                     Error = $"Template '{templateName}' not found (threshold={threshold})",
                     Data = data,
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var absX = match.X + offsetX;
@@ -136,7 +137,7 @@ public class CvMatchCommand : ICommand
                     region = region.HasValue ? $"{region.Value.x},{region.Value.y},{region.Value.w},{region.Value.h}" : null,
                 },
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
     }
 }
@@ -147,12 +148,12 @@ public class CvClickCommand : ICommand
     public string Description => "Find template image and click on the match";
     public string Usage => "cv-click <template.png> [--region x,y,w,h] [--threshold 0.8]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: cv-click <template.png> [--region x,y,w,h] [--threshold 0.8]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var templateName = args[0];
@@ -184,14 +185,14 @@ public class CvClickCommand : ICommand
         {
             Console.Write(OutputFormatter.FormatError("TemplateNotFound", templateName,
                 ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         using var template = CvMatchClient.LoadTemplate(templatePath);
         if (template == null)
         {
             Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         Bitmap? screenshot;
@@ -222,7 +223,7 @@ public class CvClickCommand : ICommand
         if (screenshot == null)
         {
             Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         using (screenshot)
@@ -242,15 +243,15 @@ public class CvClickCommand : ICommand
                         found = false,
                     },
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var absX = match.X + offsetX;
             var absY = match.Y + offsetY;
 
             var before = OutputFormatter.CaptureState(revitWindow);
-            MouseControl.ClickAt(absX, absY);
-            Thread.Sleep(200);
+            await MouseControl.ClickAt(absX, absY, ct);
+            await Task.Delay(200, ct);
             var after = OutputFormatter.CaptureState(revitWindow);
 
             Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -268,7 +269,7 @@ public class CvClickCommand : ICommand
                 },
                 Diff = OutputFormatter.ComputeDiff(before, after),
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
     }
 }
@@ -279,7 +280,7 @@ public class CvListTemplatesCommand : ICommand
     public string Description => "List available template images";
     public string Usage => "cv-templates [filter]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var filter = args.Length > 0 ? args[0] : null;
         var templates = CvMatchClient.FindTemplates(filter);
@@ -299,6 +300,6 @@ public class CvListTemplatesCommand : ICommand
                 }),
             },
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }

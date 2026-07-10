@@ -51,24 +51,24 @@ public static class MouseControl
         return ((int)(uiX * dpiScale), (int)(uiY * dpiScale));
     }
 
-    public static void ClickAt(int x, int y)
+    public static async Task ClickAt(int x, int y, CancellationToken ct = default)
     {
         SetCursorPos(x, y);
-        Thread.Sleep(50);
+        await Task.Delay(50, ct);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        Thread.Sleep(30);
+        await Task.Delay(30, ct);
         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
     }
 
-    public static void ClickElement(AutomationElement element)
+    public static async Task ClickElement(AutomationElement element, CancellationToken ct = default)
     {
         try
         {
             var rect = element.BoundingRectangle;
             var hwnd = new IntPtr(Convert.ToInt32(element.Properties.NativeWindowHandle.Value));
-            var dpi = hwnd != IntPtr.Zero ? GetDpiScale(hwnd) : 1.0;
+            var dpi = hwnd != IntPtr.Zero ? NativeMethods.GetMonitorDpi(hwnd) : 1.0;
             var (px, py) = ToPhysical((int)(rect.X + rect.Width / 2), (int)(rect.Y + rect.Height / 2), dpi);
-            ClickAt(px, py);
+            await ClickAt(px, py, ct);
         }
         catch (Exception ex)
         {
@@ -76,20 +76,20 @@ public static class MouseControl
         }
     }
 
-    public static void Drag(int x1, int y1, int x2, int y2, int steps = 10)
+    public static async Task Drag(int x1, int y1, int x2, int y2, int steps = 10, CancellationToken ct = default)
     {
         SetCursorPos(x1, y1);
-        Thread.Sleep(100);
+        await Task.Delay(100, ct);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        Thread.Sleep(50);
+        await Task.Delay(50, ct);
         for (int i = 1; i <= steps; i++)
         {
             var x = x1 + (x2 - x1) * i / steps;
             var y = y1 + (y2 - y1) * i / steps;
             SetCursorPos(x, y);
-            Thread.Sleep(20);
+            await Task.Delay(20, ct);
         }
-        Thread.Sleep(50);
+        await Task.Delay(50, ct);
         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
     }
 

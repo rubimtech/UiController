@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class MonitorsCommand : ICommand
     public string Description => "List all monitors with resolution, DPI, work area, and primary flag";
     public string Usage => "monitors";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var mgr = Program.WindowManager;
         if (mgr == null)

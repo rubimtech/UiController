@@ -1,6 +1,7 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class ToggleCommand : ICommand
     public string Description => "Toggle a checkbox/switch via TogglePattern. Usage: toggle <name> [on|off]";
     public string Usage => "toggle <name> [on|off]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

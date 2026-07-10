@@ -12,14 +12,14 @@ public class AiFindCommand : ICommand
     public string Description => "Multi-strategy element search — tries name, automation ID, locale, regex, parent context, siblings";
     public string Usage => "ai-find <query> [--parent <p>] [--type <t>] [--tab <t>] [--deep] [--max N]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
         if (args.Length == 0 || args[0].StartsWith("--"))
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "ai-find <query> [options]", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var query = args[0];
@@ -50,7 +50,7 @@ public class AiFindCommand : ICommand
             if (tab != null)
             {
                 TryClick(tab, tabName);
-                Thread.Sleep(300);
+                await Task.Delay(300, ct);
                 strategiesUsed.Add("tab-switch");
             }
         }
@@ -136,7 +136,7 @@ public class AiFindCommand : ICommand
                 },
                 DurationMs = elapsed
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -153,7 +153,7 @@ public class AiFindCommand : ICommand
             },
             DurationMs = elapsed
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static bool RunNameStrategy(AutomationElement root, string query, List<(AutomationElement, string)> results, int max)

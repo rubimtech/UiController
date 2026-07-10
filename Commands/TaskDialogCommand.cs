@@ -11,12 +11,12 @@ public class TaskDialogCommand : ICommand
     public string Description => "Read or interact with a TaskDialog: taskdialog <title> [read|click <button>|expand]";
     public string Usage => "taskdialog <title> [read|click <button>|expand]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: taskdialog <title> [read|click <button>|expand]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var dialogTitle = args[0];
@@ -32,7 +32,7 @@ public class TaskDialogCommand : ICommand
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var action = args.Length > 1 ? args[1] : "read";
@@ -46,13 +46,13 @@ public class TaskDialogCommand : ICommand
                 Success = true,
                 Data = info
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (action == "expand")
         {
             ClickExpandButton(dialog);
-            Thread.Sleep(500);
+            await Task.Delay(500, ct);
             var info = ReadTaskDialog(dialog);
             Console.Write(OutputFormatter.FormatResult(new CommandResult
             {
@@ -60,7 +60,7 @@ public class TaskDialogCommand : ICommand
                 Success = true,
                 Data = info
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (action == "click" && args.Length >= 3)
@@ -78,7 +78,7 @@ public class TaskDialogCommand : ICommand
                     Success = false,
                     Error = $"Button '{buttonName}' not found in task dialog"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             button.Click();
@@ -88,11 +88,11 @@ public class TaskDialogCommand : ICommand
                 Success = true,
                 Data = new { action = "click", button = buttonName }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         Console.Error.WriteLine($"Unknown action: {action}");
-        return Task.FromResult(1);
+        return 1;
     }
 
     private static object ReadTaskDialog(AutomationElement dialog)

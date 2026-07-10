@@ -11,7 +11,7 @@ public class ClickCommand : ICommand
     public string Description => "Click a button/control by name";
     public string Usage => "click <button-name> or click-id <automation-id>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var query = string.Join(" ", args);
         var start = DateTime.UtcNow;
@@ -23,7 +23,7 @@ public class ClickCommand : ICommand
         if (found == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", query, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
@@ -31,7 +31,7 @@ public class ClickCommand : ICommand
         if (!clicked)
         {
             Console.Write(OutputFormatter.FormatError("ClickFailed", query, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
         var after = OutputFormatter.CaptureState(revitWindow);
         var diff = OutputFormatter.ComputeDiff(before, after);
@@ -48,7 +48,7 @@ public class ClickCommand : ICommand
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static AutomationElement? FindByAutoIdInRoot(AutomationElement revitWindow, string nameOrId)
@@ -94,7 +94,7 @@ public class RibbonCommand : ICommand
     public string Description => "Click a ribbon button, optionally after switching to a tab";
     public string Usage => "ribbon <button-name> [tab-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var start = DateTime.UtcNow;
 
@@ -107,18 +107,18 @@ public class RibbonCommand : ICommand
             if (tab == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var before = OutputFormatter.CaptureState(revitWindow);
             TryClick(tab, tabName);
-            Thread.Sleep(300);
+            await Task.Delay(300, ct);
 
             var button = FindFirstEnabledVisible(revitWindow, searchName);
             if (button == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", searchName, null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             TryClick(button, searchName);
 
@@ -145,7 +145,7 @@ public class RibbonCommand : ICommand
             if (button == null)
             {
                 Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
 
             var before = OutputFormatter.CaptureState(revitWindow);
@@ -166,7 +166,7 @@ public class RibbonCommand : ICommand
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
         }
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -176,7 +176,7 @@ public class SwitchViewCommand : ICommand
     public string Description => "Switch to a view tab or list view tabs (use sv without args to list all)";
     public string Usage => "switch-view (sv) [view-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var tabs = new List<(string name, AutomationElement element)>();
         var rootChildren = SafeGetChildren(revitWindow, 10000);
@@ -207,7 +207,7 @@ public class SwitchViewCommand : ICommand
                     : new { tabs = tabNames, count = tabNames.Count }
             };
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var viewName = string.Join(" ", args);
@@ -226,13 +226,13 @@ public class SwitchViewCommand : ICommand
                 };
                 Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
                 element.Click();
-                return Task.FromResult(0);
+                return 0;
             }
         }
 
         var tabList = tabs.Select(t => t.name).ToList();
         Console.Write(OutputFormatter.FormatError("NotFound", viewName, tabList, Program.IsPretty));
-        return Task.FromResult(1);
+        return 1;
     }
 
     private static string GetTabDisplayName(AutomationElement tab)
@@ -296,12 +296,12 @@ public class TypeTextCommand : ICommand
     public string Description => "Type text into a control";
     public string Usage => "type <control-name> <text>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2)
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "type <control-name> <text>", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var controlName = args[0];
@@ -311,13 +311,13 @@ public class TypeTextCommand : ICommand
         if (found == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", controlName, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
         found.Focus();
         found.Click();
-        Thread.Sleep(200);
+        await Task.Delay(200, ct);
         SendTextSafe(found, text);
         var after = OutputFormatter.CaptureState(revitWindow);
         var diff = OutputFormatter.ComputeDiff(before, after);
@@ -334,7 +334,7 @@ public class TypeTextCommand : ICommand
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -344,14 +344,14 @@ public class RibbonTabsCommand : ICommand
     public string Description => "List ribbon tabs and their buttons";
     public string Usage => "ribbon-tabs (rt) [tab-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var rootChildren = SafeGetChildren(revitWindow, 25000);
         var ribbonList = FindRibbonList(rootChildren);
         if (ribbonList == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "ribbon list", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var ribbonTabs = new List<(string name, AutomationElement dataItem)>();
@@ -383,7 +383,7 @@ public class RibbonTabsCommand : ICommand
                     : new { tabs, count = tabs.Count }
             };
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var searchName = string.Join(" ", args);
@@ -393,7 +393,7 @@ public class RibbonTabsCommand : ICommand
             {
                 var before = OutputFormatter.CaptureState(revitWindow);
                 TryClick(item, name);
-                Thread.Sleep(500);
+                await Task.Delay(500, ct);
 
                 var buttons = new List<(string name, string autoId)>();
                 try
@@ -416,12 +416,12 @@ public class RibbonTabsCommand : ICommand
                         : new { tab = name, buttons = buttons.Select(b => new { b.name, automationId = Truncate(b.autoId, 25) }).ToList(), buttonCount = buttons.Count }
                 };
                 Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-                return Task.FromResult(0);
+                return 0;
             }
         }
 
         Console.Write(OutputFormatter.FormatError("NotFound", searchName, ribbonTabs.Select(t => t.name).ToList(), Program.IsPretty));
-        return Task.FromResult(1);
+        return 1;
     }
 
     private static AutomationElement? FindRibbonList(AutomationElement[] rootChildren)
@@ -505,7 +505,7 @@ public class ExpandCommand : ICommand
     public string Description => "Expand/collapse details buttons in active dialogs";
     public string Usage => "expand";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var dialogs = FindActiveDialogs(revitWindow);
         if (dialogs.Count == 0)
@@ -517,7 +517,7 @@ public class ExpandCommand : ICommand
                 Data = new { dialogsScanned = 0, buttonsClicked = 0 }
             };
             Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
@@ -533,7 +533,7 @@ public class ExpandCommand : ICommand
                 if (b.IsEnabled && TryClick(b, b.Name))
                 {
                     clicked++;
-                    Thread.Sleep(500);
+                    await Task.Delay(500, ct);
                 }
             }
         }
@@ -548,7 +548,7 @@ public class ExpandCommand : ICommand
             Data = new { dialogsScanned = dialogs.Count, buttonsClicked = clicked }
         };
         Console.Write(OutputFormatter.FormatResult(result2, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -558,27 +558,27 @@ public class RibbonButtonsCommand : ICommand
     public string Description => "List all ribbon tabs, panels, and buttons (full tree)";
     public string Usage => "rb [tab-name]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var rootChildren = SafeGetChildren(revitWindow, 40000);
         if (rootChildren.Length == 0)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "UI tree", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var mMainTabs = FindChildByAutoId(rootChildren, "mMainTabs");
         if (mMainTabs == null)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var tabButtons = GetTabButtons(mMainTabs);
         if (tabButtons.Count == 0)
         {
             Console.Write(OutputFormatter.FormatError("NotFound", "ribbon tabs", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (args.Length > 0)
@@ -591,7 +591,7 @@ public class RibbonButtonsCommand : ICommand
         foreach (var (tabName, tabBtn) in tabButtons)
         {
             TryClick(tabBtn, tabName);
-            Thread.Sleep(1000);
+            await Task.Delay(1000, ct);
 
             var freshRoot = SafeGetChildren(revitWindow, 20000);
             var freshList = FindRibbonListFast(freshRoot);
@@ -615,7 +615,7 @@ public class RibbonButtonsCommand : ICommand
                 : new { tabs = tabsData, totalTabs = tabButtons.Count }
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static List<(string name, AutomationElement btn)> GetTabButtons(AutomationElement mMainTabs)

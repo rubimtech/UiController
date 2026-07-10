@@ -142,7 +142,7 @@ public static class NativeMethods
             if (GetDpiForMonitor(monitor, DpiType.Effective, out var dpiX, out _))
                 return dpiX / 96.0;
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"GetMonitorDpi: {ex.Message}"); }
         return 1.0;
     }
 }

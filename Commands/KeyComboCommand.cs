@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class KeyComboCommand : ICommand
     public string Description => "Send keyboard shortcut via SendKeys. Usage: key-combo <keys> (e.g. \"^c\" for Ctrl+C, \"%{F4}\" for Alt+F4, \"^+s\" for Ctrl+Shift+S)";
     public string Usage => "key-combo <keys>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var keys = string.Join(" ", args);
         if (string.IsNullOrEmpty(keys))

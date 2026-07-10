@@ -12,12 +12,12 @@ public class PropertySheetCommand : ICommand
     public string Description => "Read or interact with a PropertySheet dialog: ps <dialog-title> [action]";
     public string Usage => "ps <dialog-title> [fields|tabs|type <label> <value>|check <label>|select <label> <option>|click <button>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: ps <dialog-title> [fields|tabs|type|check|select|click]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var dialogTitle = args[0];
@@ -30,7 +30,7 @@ public class PropertySheetCommand : ICommand
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (args.Length == 1 || args[1] == "fields")
@@ -42,7 +42,7 @@ public class PropertySheetCommand : ICommand
                 Success = true,
                 Data = new { dialog = dialog.Name, fields }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (args[1] == "tabs")
@@ -54,7 +54,7 @@ public class PropertySheetCommand : ICommand
                 Success = true,
                 Data = new { dialog = dialog.Name, tabs }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (args[1] == "type" && args.Length >= 4)
@@ -70,11 +70,11 @@ public class PropertySheetCommand : ICommand
                     Success = false,
                     Error = $"Field with label '{label}' not found"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             field.Focus();
             field.Click();
-            Thread.Sleep(100);
+            await Task.Delay(100, ct);
             SendTextSafe(field, value);
             Console.Write(OutputFormatter.FormatResult(new CommandResult
             {
@@ -82,7 +82,7 @@ public class PropertySheetCommand : ICommand
                 Success = true,
                 Data = new { action = "type", label, value }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (args[1] == "check" && args.Length >= 3)
@@ -98,7 +98,7 @@ public class PropertySheetCommand : ICommand
                     Success = false,
                     Error = $"Checkbox with label '{label}' not found"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             var currentState = GetIsChecked(checkbox);
             if (newState == null || newState == currentState)
@@ -109,7 +109,7 @@ public class PropertySheetCommand : ICommand
                     Success = true,
                     Data = new { action = "read", label, @checked = currentState }
                 }, Program.IsPretty));
-                return Task.FromResult(0);
+                return 0;
             }
             checkbox.Click();
             Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -118,7 +118,7 @@ public class PropertySheetCommand : ICommand
                 Success = true,
                 Data = new { action = "toggle", label, from = currentState, to = newState }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         if (args[1] == "select" && args.Length >= 4)
@@ -134,10 +134,10 @@ public class PropertySheetCommand : ICommand
                     Success = false,
                     Error = $"ComboBox with label '{label}' not found"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             combo.Click();
-            Thread.Sleep(300);
+            await Task.Delay(300, ct);
             var dropdownItem = FindDropdownItem(combo, option);
             if (dropdownItem != null)
             {
@@ -148,7 +148,7 @@ public class PropertySheetCommand : ICommand
                     Success = true,
                     Data = new { action = "select", label, option }
                 }, Program.IsPretty));
-                return Task.FromResult(0);
+                return 0;
             }
             Console.Write(OutputFormatter.FormatResult(new CommandResult
             {
@@ -156,7 +156,7 @@ public class PropertySheetCommand : ICommand
                 Success = false,
                 Error = $"Option '{option}' not found in combobox '{label}'"
             }, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         if (args[1] == "click" && args.Length >= 3)
@@ -171,7 +171,7 @@ public class PropertySheetCommand : ICommand
                     Success = false,
                     Error = $"Button '{buttonName}' not found in dialog"
                 }, Program.IsPretty));
-                return Task.FromResult(1);
+                return 1;
             }
             button.Click();
             Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -180,11 +180,11 @@ public class PropertySheetCommand : ICommand
                 Success = true,
                 Data = new { action = "click", button = buttonName }
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
 
         Console.Error.WriteLine($"Unknown action: {args[1]}");
-        return Task.FromResult(1);
+        return 1;
     }
 
     private static AutomationElement? FindActiveDialog(AutomationElement root, string name)

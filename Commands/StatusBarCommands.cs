@@ -11,7 +11,7 @@ public class StatusBarCommand : ICommand
     public string Description => "Read Revit status bar text";
     public string Usage => "statusbar";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var text = ReadStatusBarText(revitWindow);
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -20,7 +20,7 @@ public class StatusBarCommand : ICommand
             Success = true,
             Data = new { text }
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static string ReadStatusBarText(AutomationElement revitWindow)
@@ -102,7 +102,7 @@ public class WaitProgressCommand : ICommand
     public string Description => "Wait for Revit progress bar to complete: wait-progress [timeout-s]";
     public string Usage => "wait-progress [timeout-s]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var timeout = args.Length > 0 && int.TryParse(args[0], out var t) ? t * 1000 : 60000;
 
@@ -124,9 +124,9 @@ public class WaitProgressCommand : ICommand
                             Success = true,
                             Data = new { action = "completed", waitedMs = timeout - (int)(deadline - DateTime.UtcNow).TotalMilliseconds }
                         }, Program.IsPretty));
-                        return Task.FromResult(0);
+                        return 0;
                     }
-                    Thread.Sleep(500);
+                    await Task.Delay(500, ct);
                     continue;
                 }
 
@@ -143,13 +143,13 @@ public class WaitProgressCommand : ICommand
                             Success = true,
                             Data = new { action = "completed", finalValue = value }
                         }, Program.IsPretty));
-                        return Task.FromResult(0);
+                        return 0;
                     }
                 }
                 catch { }
             }
             catch { }
-            Thread.Sleep(500);
+            await Task.Delay(500, ct);
         }
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -158,7 +158,7 @@ public class WaitProgressCommand : ICommand
             Success = false,
             Error = $"Progress did not complete within {timeout / 1000}s"
         }, Program.IsPretty));
-        return Task.FromResult(1);
+        return 1;
     }
 
     private static AutomationElement? FindProgressBar(AutomationElement root)

@@ -9,24 +9,19 @@ public static class AutomationHelper
 {
     public static AutomationElement[] SafeGetChildren(AutomationElement element, int timeoutMs = 4000)
     {
-        try
+        return ((Func<AutomationElement[]>)(() =>
         {
-            var task = Task.Run(() =>
+            using var cts = new CancellationTokenSource(timeoutMs);
+            try
             {
-                var list = new List<AutomationElement>();
-                try
-                {
-                    foreach (var c in element.FindAllChildren())
-                        list.Add(c);
-                }
-                catch { }
-                return list.ToArray();
-            });
-            if (task.Wait(TimeSpan.FromMilliseconds(timeoutMs)))
-                return task.Result;
-        }
-        catch { }
-        return [];
+                return element.FindAllChildren().ToArray();
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Warn(nameof(SafeGetChildren), ex.Message);
+                return Array.Empty<AutomationElement>();
+            }
+        })).Safe("SafeGetChildren") ?? Array.Empty<AutomationElement>();
     }
 
     public static List<AutomationElement> FindControlsByName(AutomationElement parent, string name, int maxResults = 100)
@@ -65,7 +60,7 @@ public static class AutomationHelper
                         }
                         queue.Enqueue(c);
                     }
-                    catch { }
+                    catch (Exception ex) { LoggingService.Warn("Safe", $"FindControlsByName inner: {ex.Message}"); }
                 }
             }
         });
@@ -100,7 +95,7 @@ public static class AutomationHelper
                             results.Add(w);
                     }
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindWindowsWithName inner: {ex.Message}"); }
             }
         }
         return results;
@@ -148,7 +143,7 @@ public static class AutomationHelper
 
                         queue.Enqueue((c, depth + 1));
                     }
-                    catch { }
+                    catch (Exception ex) { LoggingService.Warn("Safe", $"FindFirstEnabledVisible inner: {ex.Message}"); }
                 }
             }
         }
@@ -165,7 +160,7 @@ public static class AutomationHelper
                 if (c.ControlType == ControlType.Window && !string.IsNullOrEmpty(c.Name) && c.IsOffscreen == false)
                     results.Add(c);
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"FindActiveDialogs inner: {ex.Message}"); }
         }
         return results;
     }
@@ -182,7 +177,7 @@ public static class AutomationHelper
                         return c;
                 }
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"FindFirstChildByType inner: {ex.Message}"); }
         }
         return null;
     }
@@ -212,7 +207,7 @@ public static class AutomationHelper
                 return;
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"SendTextSafe: {ex.Message}"); }
 
         var escaped = EscapeSendKeys(text);
         System.Windows.Forms.SendKeys.SendWait(escaped);
@@ -223,8 +218,8 @@ public static class AutomationHelper
         return Regex.Replace(text, @"([+^%~(){}\[\]])", "{$1}");
     }
 
-    public static string SafeGetAutoId(AutomationElement e) { try { return e.AutomationId ?? ""; } catch { return ""; } }
-    public static string SafeGetName(AutomationElement e) { try { return e.Name ?? ""; } catch { return ""; } }
+    public static string SafeGetAutoId(AutomationElement e) { try { return e.AutomationId ?? ""; } catch (Exception ex) { LoggingService.Warn("Safe", $"SafeGetAutoId: {ex.Message}"); return ""; } }
+    public static string SafeGetName(AutomationElement e) { try { return e.Name ?? ""; } catch (Exception ex) { LoggingService.Warn("Safe", $"SafeGetName: {ex.Message}"); return ""; } }
 
     public static string Truncate(string s, int max)
     {
@@ -280,10 +275,10 @@ public static class AutomationHelper
                             return sibling;
                     }
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindFieldByLabel inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindFieldByLabel outer: {ex.Message}"); }
         return null;
     }
 
@@ -299,10 +294,10 @@ public static class AutomationHelper
                         (c.Name ?? "").Contains(label, StringComparison.OrdinalIgnoreCase))
                         return c;
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindCheckboxByLabel inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindCheckboxByLabel outer: {ex.Message}"); }
         return null;
     }
 
@@ -318,10 +313,10 @@ public static class AutomationHelper
                         (c.Name ?? "").Contains(label, StringComparison.OrdinalIgnoreCase))
                         return c;
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindComboByLabel inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindComboByLabel outer: {ex.Message}"); }
         return null;
     }
 
@@ -342,13 +337,13 @@ public static class AutomationHelper
                             if ((cc.Name ?? "").Contains(text, StringComparison.OrdinalIgnoreCase))
                                 return cc;
                         }
-                        catch { }
+                        catch (Exception ex) { LoggingService.Warn("Safe", $"FindDropdownItem inner2: {ex.Message}"); }
                     }
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindDropdownItem inner1: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindDropdownItem outer: {ex.Message}"); }
         return null;
     }
 
@@ -364,10 +359,10 @@ public static class AutomationHelper
                         (c.Name ?? "").Contains(name, StringComparison.OrdinalIgnoreCase))
                         return c;
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindDialogButton inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindDialogButton outer: {ex.Message}"); }
         return null;
     }
 
@@ -379,7 +374,7 @@ public static class AutomationHelper
             if (toggle != null)
                 return toggle.ToggleState == ToggleState.On;
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"GetIsChecked: {ex.Message}"); }
         return null;
     }
 
@@ -399,10 +394,10 @@ public static class AutomationHelper
                             return c.Name;
                     }
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindLabelNear inner: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindLabelNear outer: {ex.Message}"); }
         return "";
     }
 
@@ -419,7 +414,7 @@ public static class AutomationHelper
                     return children[i + 1];
             }
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindNextSibling: {ex.Message}"); }
         return null;
     }
 
@@ -430,7 +425,7 @@ public static class AutomationHelper
             var walker = child.Automation.TreeWalkerFactory.GetControlViewWalker();
             return walker.GetParent(child);
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"FindParent: {ex.Message}"); }
         return null;
     }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -11,7 +12,7 @@ public class ScriptListCommand : ICommand
     public string Description => "List available .rvs scripts in default search paths";
     public string Usage => "script-list [--path <dir>] [--git]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var customPath = ParseFlagValue(args, "--path");
         var gitOnly = args.Any(a => a == "--git");
@@ -114,7 +115,7 @@ public class ScriptLogCommand : ICommand
     public string Description => "Show git log for .rvs script files";
     public string Usage => "script-log [--file <path>] [--last N]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var file = ParseFlagValue(args, "--file");
         var last = ParseIntFlag(args, "--last") ?? 10;
@@ -207,7 +208,7 @@ public class ScriptDiffCommand : ICommand
     public string Description => "Show git diff for .rvs script files";
     public string Usage => "script-diff [--file <path>] [--commit <hash>] [--last N]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var file = ParseFlagValue(args, "--file");
         var commit = ParseFlagValue(args, "--commit");

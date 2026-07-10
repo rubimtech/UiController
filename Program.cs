@@ -27,6 +27,7 @@ public static class Program
         ["hr"] = "highlight-region",
     };
 
+    public static CancellationTokenSource Cts { get; } = new();
     public static bool IsPretty { get; set; }
     public static bool IsScreenshot { get; set; }
     public static string Verbosity { get; set; } = "normal";
@@ -164,6 +165,12 @@ public static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            Cts.Cancel();
+        };
+
         var cleanArgs = ParseGlobalFlags(args);
 
         if (cleanArgs.Length == 0)
@@ -185,19 +192,19 @@ public static class Program
 
             if (UseActiveWindow)
             {
-                session = WindowSession.ConnectToActive();
+                session = await WindowSession.ConnectToActive(ct: Cts.Token);
             }
             else if (TargetPid.HasValue || ProcessName != "Revit")
             {
-                session = WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec);
+                session = await WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec, Cts.Token);
             }
             else if (!string.IsNullOrEmpty(WindowTitle))
             {
-                session = WindowSession.ConnectByTitle(WindowTitle, ConnectTimeoutSec);
+                session = await WindowSession.ConnectByTitle(WindowTitle, ConnectTimeoutSec, Cts.Token);
             }
             else
             {
-                session = WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec);
+                session = await WindowSession.ConnectToProcess(TargetPid, ProcessName, ConnectTimeoutSec, Cts.Token);
             }
 
             if (session == null)
@@ -215,9 +222,9 @@ public static class Program
             {
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
-                var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray());
+                var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray(), Cts.Token);
 
-                try { LastOutput = Console.Out?.ToString(); } catch { }
+                try { LastOutput = Console.Out?.ToString(); } catch (Exception ex) { LoggingService.Warn("Safe", $"LastOutput: {ex.Message}"); }
 
                 if (SessionContext.IsActive && beforeState != null)
                 {
@@ -268,6 +275,8 @@ public static class Program
                 UseActiveWindow = true;
             else if (args[i] == "--connect-timeout" && i + 1 < args.Length && int.TryParse(args[++i], out var timeout))
                 ConnectTimeoutSec = timeout;
+            else if (args[i] == "--non-interactive")
+                SafetyGuard.IsNonInteractive = true;
             else
                 result.Add(args[i]);
         }
@@ -288,7 +297,8 @@ Global flags:
   --window-title <title>           Connect to window by title (contains match)
   --active                         Connect to the currently active/foreground window
   --connect-timeout <sec>          Wait timeout for process (default: 30)
-
+  --non-interactive                Auto-reject destructive actions without prompt
+ 
 Desktop Window Management (any process):
   list-all (la) [--filter <txt>]        List ALL visible top-level windows on desktop
   focus <title> [--pid <N>|--hwnd <h>]  Bring a window to foreground

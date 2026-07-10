@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class FocusCommand : ICommand
     public string Description => "Bring a window to foreground by title or by PID with --pid <N>. Usage: focus <title> or focus --pid <N> or focus --hwnd <hex>";
     public string Usage => "focus <title> [--pid <N> | --hwnd <hex>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var mgr = Program.WindowManager;
         if (mgr == null)

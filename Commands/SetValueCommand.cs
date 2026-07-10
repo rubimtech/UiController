@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class SetValueCommand : ICommand
     public string Description => "Set a control's value via ValuePattern (more reliable than 'type' which uses SendKeys). Usage: set-value <name> <text>";
     public string Usage => "set-value <name> <text>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2)
         {

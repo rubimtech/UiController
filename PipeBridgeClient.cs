@@ -75,7 +75,7 @@ public class PipeBridgeClient : IDisposable
                 if (n == 0) return null;
                 read += n;
             }
-            catch { return null; }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge len read: {ex.Message}"); return null; }
         }
 
         var len = BitConverter.ToInt32(lenBuf, 0);
@@ -92,7 +92,7 @@ public class PipeBridgeClient : IDisposable
                 if (n == 0) return null;
                 read += n;
             }
-            catch { return null; }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge data read: {ex.Message}"); return null; }
         }
 
         return Encoding.UTF8.GetString(dataBuf);
@@ -107,7 +107,7 @@ public class PipeBridgeClient : IDisposable
             {
                 Thread.Sleep(10000);
                 try { SendCommand("_heartbeat", new { pid = Environment.ProcessId }, 2000); }
-                catch { break; }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge heartbeat: {ex.Message}"); break; }
             }
         });
         _heartbeatThread.IsBackground = true;
@@ -117,7 +117,7 @@ public class PipeBridgeClient : IDisposable
     public void Disconnect()
     {
         _running = false;
-        try { SendCommand("_client_shutdown", new { }, 1000); } catch { }
+        try { SendCommand("_client_shutdown", new { }, 1000); } catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge disconnect: {ex.Message}"); }
         lock (_lock)
         {
             _pipe?.Dispose();

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -11,7 +12,7 @@ public class ClipboardGetCommand : ICommand
     public string Description => "Read text from clipboard. Usage: clipboard-get";
     public string Usage => "clipboard-get";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         try
         {
@@ -42,7 +43,7 @@ public class ClipboardSetCommand : ICommand
     public string Description => "Write text to clipboard. Usage: clipboard-set <text>";
     public string Usage => "clipboard-set <text>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var text = string.Join(" ", args);
         if (string.IsNullOrEmpty(text))

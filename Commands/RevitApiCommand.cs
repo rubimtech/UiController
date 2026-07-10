@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class RevitApiCommand : ICommand
     public string Description => "Execute a command via Revit Named Pipe bridge";
     public string Usage => "revit-api <command> [--payload <json>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -73,7 +74,7 @@ public class RevitApiSelectCommand : ICommand
     public string Description => "Select elements by IDs in Revit via pipe: revit-select <id1> [id2 ...]";
     public string Usage => "revit-select <element-id> [element-id ...]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -114,7 +115,7 @@ public class RevitApiGetCommand : ICommand
     public string Description => "Get Revit data via pipe: revit-get <query> (elements, views, categories)";
     public string Usage => "revit-get <query>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

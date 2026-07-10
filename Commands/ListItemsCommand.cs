@@ -1,6 +1,7 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class ListItemsCommand : ICommand
     public string Description => "Read all items in a ListBox/ListView via SelectionPattern. Usage: list-items <name> [--max N]";
     public string Usage => "list-items <name> [--max N]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

@@ -36,7 +36,7 @@ public static class HighlightHelper
             {
                 timer?.Stop();
                 timer?.Dispose();
-                try { _overlayForm?.Close(); } catch { }
+                try { _overlayForm?.Close(); } catch (Exception ex) { LoggingService.Warn("Safe", $"Highlight timer close: {ex.Message}"); }
                 _overlayForm = null;
             };
             timer.Start();
@@ -54,6 +54,6 @@ public static class HighlightHelper
             _overlayForm?.Close();
             _overlayForm = null;
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"Highlight Clear: {ex.Message}"); }
     }
 }

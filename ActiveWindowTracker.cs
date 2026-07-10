@@ -9,7 +9,6 @@ public class ActiveWindowTracker : IDisposable
     private IntPtr _hook;
     private WinEventDelegate? _delegate;
     private readonly object _lock = new();
-    private System.Threading.Timer? _pollTimer;
 
     public event Action<WindowInfo?>? ForegroundChanged;
     public WindowInfo? CurrentForeground { get; private set; }
@@ -17,14 +16,13 @@ public class ActiveWindowTracker : IDisposable
     public ActiveWindowTracker()
     {
         StartHook();
-        _pollTimer = new System.Threading.Timer(_ => PollForeground(), null, 1000, 1000);
     }
 
     private void StartHook()
     {
         _delegate = OnWinEvent;
         _hook = SetWinEventHook(
-            EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_LOCATIONCHANGE,
             IntPtr.Zero, _delegate,
             0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
     }
@@ -33,13 +31,6 @@ public class ActiveWindowTracker : IDisposable
     {
         if (hWnd == IntPtr.Zero) return;
         UpdateForeground(hWnd);
-    }
-
-    private void PollForeground(object? state = null)
-    {
-        var hwnd = GetForegroundWindow();
-        if (hwnd != IntPtr.Zero)
-            UpdateForeground(hwnd);
     }
 
     private void UpdateForeground(IntPtr hWnd)
@@ -68,7 +59,7 @@ public class ActiveWindowTracker : IDisposable
                 var p = Process.GetProcessById(pid);
                 procName = p.ProcessName;
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"WindowFromHandle GetProcessById: {ex.Message}"); }
 
             var rect = new RECT();
             GetWindowRect(hWnd, out rect);
@@ -94,7 +85,7 @@ public class ActiveWindowTracker : IDisposable
                 IsVisible = IsWindowVisible(hWnd)
             };
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WindowFromHandle outer: {ex.Message}"); return null; }
     }
 
     public List<WindowInfo> GetAllWindows()
@@ -117,7 +108,7 @@ public class ActiveWindowTracker : IDisposable
                     var p = Process.GetProcessById(pid);
                     procName = p.ProcessName;
                 }
-                catch { }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"GetAllWindows GetProcessById: {ex.Message}"); }
 
                 var rect = new RECT();
                 if (!GetWindowRect(hWnd, out rect)) return true;
@@ -142,7 +133,7 @@ public class ActiveWindowTracker : IDisposable
                     IsVisible = true
                 });
             }
-            catch { }
+            catch (Exception ex) { LoggingService.Warn("Safe", $"GetAllWindows outer: {ex.Message}"); }
             return true;
         }, IntPtr.Zero);
 
@@ -151,7 +142,6 @@ public class ActiveWindowTracker : IDisposable
 
     public void Dispose()
     {
-        _pollTimer?.Dispose();
         if (_hook != IntPtr.Zero)
             UnhookWinEvent(_hook);
     }

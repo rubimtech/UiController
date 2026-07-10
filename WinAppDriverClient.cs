@@ -63,7 +63,7 @@ public class WinAppDriverClient : IDisposable
             using var doc = JsonDocument.Parse(body);
             return doc.RootElement.GetProperty("value").GetProperty("ELEMENT").GetString();
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver FindElement: {ex.Message}"); return null; }
     }
 
     public bool Click(string elementId)
@@ -74,7 +74,7 @@ public class WinAppDriverClient : IDisposable
             var response = _client.PostAsync($"{BaseUrl}/wd/hub/session/{_sessionId}/element/{elementId}/click", null).GetAwaiter().GetResult();
             return response.IsSuccessStatusCode;
         }
-        catch { return false; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver Click: {ex.Message}"); return false; }
     }
 
     public bool TypeText(string elementId, string text)
@@ -88,7 +88,7 @@ public class WinAppDriverClient : IDisposable
             var response = _client.PostAsync($"{BaseUrl}/wd/hub/session/{_sessionId}/element/{elementId}/value", content).GetAwaiter().GetResult();
             return response.IsSuccessStatusCode;
         }
-        catch { return false; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver TypeText: {ex.Message}"); return false; }
     }
 
     public string? GetSource()
@@ -102,14 +102,14 @@ public class WinAppDriverClient : IDisposable
             using var doc = JsonDocument.Parse(body);
             return doc.RootElement.GetProperty("value").GetString();
         }
-        catch { return null; }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver GetSource: {ex.Message}"); return null; }
     }
 
     public void Disconnect()
     {
         if (_sessionId == null) return;
         try { _client.DeleteAsync($"{BaseUrl}/wd/hub/session/{_sessionId}").GetAwaiter().GetResult(); }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver Disconnect: {ex.Message}"); }
         _sessionId = null;
     }
 

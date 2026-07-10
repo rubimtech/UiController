@@ -1,6 +1,7 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class DumpPatternsCommand : ICommand
     public string Description => "Dump UIA tree with supported patterns for each element. Usage: dump-patterns [depth] [--type <ct>] [--filter-name <name>]";
     public string Usage => "dump-patterns [depth] [--type <ct>] [--filter-name <name>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var depth = 2;
         string? filterType = null;

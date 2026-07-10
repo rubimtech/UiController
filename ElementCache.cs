@@ -30,7 +30,7 @@ public static class ElementCache
                 Root = root
             };
         }
-        catch { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"ElementCache Add: {ex.Message}"); }
     }
 
     public static AutomationElement? Get(string key)
@@ -59,8 +59,9 @@ public static class ElementCache
                 return null;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            LoggingService.Warn("Safe", $"ElementCache Get: {ex.Message}");
             _cache.TryRemove(key, out _);
             return null;
         }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -10,7 +11,7 @@ public class AllureSetupCommand : ICommand
     public string Description => "Initialize Allure reporting for test results";
     public string Usage => "allure-setup [--output <dir>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var outputDir = "allure-results";
         for (int i = 0; i < args.Length; i++)
@@ -47,7 +48,7 @@ public class AllureReportCommand : ICommand
     public string Description => "Generate Allure report from test results: allure-report [--input <dir>] [--output <dir>]";
     public string Usage => "allure-report [--input <dir>] [--output <dir>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var resultsDir = "allure-results";
         var reportDir = "allure-report";

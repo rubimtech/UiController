@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class SessionBeginCommand : ICommand
     public string Description => "Start a stateful session, optionally setting initial dialog/tab context";
     public string Usage => "session-begin [--dialog <title>] [--tab <tab>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         SessionContext.Begin();
 
@@ -46,7 +47,7 @@ public class SessionEndCommand : ICommand
     public string Description => "End the current stateful session and clear all context";
     public string Usage => "session-end";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var snapshot = SessionContext.Status();
         SessionContext.End();
@@ -68,7 +69,7 @@ public class SessionStatusCommand : ICommand
     public string Description => "Show current session state (dialog, tab, variables, breadcrumbs)";
     public string Usage => "session-status";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var result = new CommandResult
         {

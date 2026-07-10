@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class InvokeCommand : ICommand
     public string Description => "Invoke a control via InvokePattern (more reliable than Click for some buttons). Usage: invoke <name>";
     public string Usage => "invoke <name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var name = string.Join(" ", args);
         if (string.IsNullOrEmpty(name))

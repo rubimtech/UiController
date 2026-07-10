@@ -13,7 +13,7 @@ public class ListWindowsCommand : ICommand
     public string Description => "List all Revit windows/dialogs";
     public string Usage => "list-windows (lw)";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var windows = FindWindowsWithName(revitWindow, null);
         var elements = OutputFormatter.FromElementList(windows);
@@ -37,7 +37,7 @@ public class ListControlsCommand : ICommand
     public string Description => "List controls in a window, optionally filtered by name";
     public string Usage => "list-controls (lc) [window-name-filter]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var filter = args.Length > 0 ? string.Join(" ", args) : null;
         var windows = FindWindowsWithName(revitWindow, filter);
@@ -70,7 +70,7 @@ public class FindCommand : ICommand
     public string Description => "Find controls matching a name and show their info";
     public string Usage => "find <control-name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var name = string.Join(" ", args);
         var results = FindControlsByName(revitWindow, name);
@@ -103,7 +103,7 @@ public class InfoCommand : ICommand
     public string Description => "Show Revit window info";
     public string Usage => "info";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var rect = revitWindow.BoundingRectangle;
         var result = new CommandResult
@@ -135,7 +135,7 @@ public class DumpCommand : ICommand
     public string Description => "Dump UIA tree to console or file (-f <path>)";
     public string Usage => "dump [depth] [-f <file>] [-t <control-type>] [-id <automation-id>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var depth = 3;
         string? outputFile = null;
@@ -246,7 +246,7 @@ public class InspectCommand : ICommand
     public string Description => "Like Inspect.exe — explore element details. Usage: inspect [index-path] or inspect <name> or inspect -all";
     public string Usage => "inspect [index-path]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0 || args[0] == "-all")
         {

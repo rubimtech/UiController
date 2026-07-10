@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class ListAllWindowsCommand : ICommand
     public string Description => "List all visible top-level windows on the desktop with monitor info";
     public string Usage => "list-all (la) [--filter <text>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         string? filter = null;
         for (int i = 0; i < args.Length; i++)

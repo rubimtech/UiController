@@ -12,12 +12,12 @@ public class CanvasClickCommand : ICommand
     public string Description => "Click at a position within the Revit graphics viewport: canvas-click <x> <y> [--relative]";
     public string Usage => "canvas-click <x> <y> [--relative]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 2 || !int.TryParse(args[0], out var x) || !int.TryParse(args[1], out var y))
         {
             Console.Error.WriteLine("Usage: canvas-click <x> <y> [--relative]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var relative = args.Contains("--relative");
@@ -38,7 +38,7 @@ public class CanvasClickCommand : ICommand
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
-        MouseControl.ClickAt(x, y);
+        await MouseControl.ClickAt(x, y, ct);
         var after = OutputFormatter.CaptureState(revitWindow);
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -48,7 +48,7 @@ public class CanvasClickCommand : ICommand
             Data = new { x, y, relative },
             Diff = OutputFormatter.ComputeDiff(before, after)
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     public static AutomationElement? FindViewport(AutomationElement root)
@@ -86,7 +86,7 @@ public class CanvasDragCommand : ICommand
     public string Description => "Drag within viewport: canvas-drag <x1> <y1> <x2> <y2> [--relative]";
     public string Usage => "canvas-drag <x1> <y1> <x2> <y2> [--relative]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length < 4 ||
             !int.TryParse(args[0], out var x1) ||
@@ -95,7 +95,7 @@ public class CanvasDragCommand : ICommand
             !int.TryParse(args[3], out var y2))
         {
             Console.Error.WriteLine("Usage: canvas-drag <x1> <y1> <x2> <y2> [--relative]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var relative = args.Contains("--relative");
@@ -118,7 +118,7 @@ public class CanvasDragCommand : ICommand
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
-        MouseControl.Drag(x1, y1, x2, y2);
+        await MouseControl.Drag(x1, y1, x2, y2, ct: ct);
         var after = OutputFormatter.CaptureState(revitWindow);
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -128,7 +128,7 @@ public class CanvasDragCommand : ICommand
             Data = new { from = new { x = x1, y = y1 }, to = new { x = x2, y = y2 }, relative },
             Diff = OutputFormatter.ComputeDiff(before, after)
         }, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static AutomationElement? FindViewport(AutomationElement root) => CanvasClickCommand.FindViewport(root);
@@ -143,12 +143,12 @@ public class CanvasZoomCommand : ICommand
     public string Description => "Zoom in/out in viewport: canvas-zoom <factor> (positive=zoom in, negative=zoom out)";
     public string Usage => "canvas-zoom <factor>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0 || !int.TryParse(args[0], out var factor))
         {
             Console.Error.WriteLine("Usage: canvas-zoom <factor> (positive=in, negative=out)");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var viewport = FindViewport(revitWindow);
@@ -165,7 +165,7 @@ public class CanvasZoomCommand : ICommand
 
             var before = OutputFormatter.CaptureState(revitWindow);
             SetCursorPos(px, py);
-            Thread.Sleep(100);
+            await Task.Delay(100, ct);
             MouseControl.Scroll(factor * 120);
             var after = OutputFormatter.CaptureState(revitWindow);
 
@@ -176,12 +176,12 @@ public class CanvasZoomCommand : ICommand
                 Data = new { factor, centerX = px, centerY = py },
                 Diff = OutputFormatter.ComputeDiff(before, after)
             }, Program.IsPretty));
-            return Task.FromResult(0);
+            return 0;
         }
         catch (Exception ex)
         {
             Console.Write(OutputFormatter.FormatError("CanvasZoomError", factor.ToString(), [ex.Message], Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
     }
 
@@ -194,7 +194,7 @@ public class CanvasScreenshotCommand : ICommand
     public string Description => "Capture screenshot of the graphics viewport";
     public string Usage => "canvas-screenshot";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var viewport = FindViewport(revitWindow) ?? revitWindow;
         var ss = ScreenshotHelper.CaptureWindow(viewport);
@@ -207,7 +207,7 @@ public class CanvasScreenshotCommand : ICommand
             Data = new { hasScreenshot = ss != null },
             Screenshot = ss
         }, Program.IsPretty));
-        return Task.FromResult(ss != null ? 0 : 1);
+        return ss != null ? 0 : 1;
     }
 
     private static AutomationElement? FindViewport(AutomationElement root) => CanvasClickCommand.FindViewport(root);

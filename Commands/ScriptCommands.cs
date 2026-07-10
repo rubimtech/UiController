@@ -11,15 +11,15 @@ public class WaitCommand : ICommand
     public string Description => "Wait N seconds";
     public string Usage => "wait <seconds>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0 || !int.TryParse(args[0], out var sec))
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "wait <seconds>", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
-        Thread.Sleep(sec * 1000);
+        await Task.Delay(sec * 1000, ct);
 
         var result = new CommandResult
         {
@@ -28,7 +28,7 @@ public class WaitCommand : ICommand
             Data = new { seconds = sec }
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 }
 
@@ -45,19 +45,19 @@ public class ScriptCommand : ICommand
         _commands = commands;
     }
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Write(OutputFormatter.FormatError("InvalidArgs", "script <file-path>", null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var filePath = string.Join(" ", args);
         if (!File.Exists(filePath))
         {
             Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.IsPretty));
-            return Task.FromResult(1);
+            return 1;
         }
 
         var lines = File.ReadAllLines(filePath);
@@ -114,7 +114,7 @@ public class ScriptCommand : ICommand
                 var title = cmdArgs[0];
                 var timeout = cmdArgs.Length > 1 && int.TryParse(cmdArgs[1], out var t) ? t * 1000 : 15000;
                 Console.WriteLine($"  Waiting for dialog '{title}' (timeout: {timeout / 1000}s)...");
-                var dialog = Retry.WaitForDialog(revitWindow, title, timeout);
+                var dialog = await Retry.WaitForDialog(revitWindow, title, timeout, ct: ct);
                 if (dialog != null)
                 {
                     Console.WriteLine($"  Dialog appeared: \"{dialog.Name}\"");
@@ -133,7 +133,7 @@ public class ScriptCommand : ICommand
                 var title = cmdArgs[0];
                 var timeout = cmdArgs.Length > 1 && int.TryParse(cmdArgs[1], out var t) ? t * 1000 : 15000;
                 Console.WriteLine($"  Waiting for dialog '{title}' to close...");
-                var closed = Retry.WaitForDialogClose(revitWindow, title, timeout);
+                var closed = await Retry.WaitForDialogClose(revitWindow, title, timeout, ct: ct);
                 if (closed)
                 {
                     Console.WriteLine($"  Dialog closed: \"{title}\"");
@@ -166,7 +166,7 @@ public class ScriptCommand : ICommand
                 if (combo != null)
                 {
                     combo.Click();
-                    Thread.Sleep(300);
+                    await Task.Delay(300, ct);
                     foreach (var c in SafeGetChildren(combo, 3000))
                     {
                         try
@@ -174,7 +174,7 @@ public class ScriptCommand : ICommand
                             if ((c.Name ?? "").Contains(option, StringComparison.OrdinalIgnoreCase))
                             { c.Click(); Console.WriteLine($"  Selected: {option}"); break; }
                         }
-                        catch { }
+                        catch (Exception ex) { LoggingService.Warn("Safe", $"Script select click: {ex.Message}"); }
                     }
                 }
                 else
@@ -205,7 +205,7 @@ public class ScriptCommand : ICommand
             }
 
             executed++;
-            var exitCode = cmd.ExecuteAsync(revitWindow, cmdArgs).GetAwaiter().GetResult();
+            var exitCode = await cmd.ExecuteAsync(revitWindow, cmdArgs, ct);
             if (exitCode != 0)
                 failed++;
             LoggingService.Info("script", $"Executed: {cmdName} {string.Join(" ", cmdArgs)}");
@@ -219,7 +219,7 @@ public class ScriptCommand : ICommand
             Data = new { file = filePath, totalLines = lines.Length, executed, failed }
         };
         Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
-        return Task.FromResult(0);
+        return 0;
     }
 
     private static string[] ExpandVariables(string[] args)

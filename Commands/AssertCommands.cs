@@ -11,7 +11,7 @@ public class AssertDialogCommand : ICommand
     public string Description => "Assert dialog state: assert-dialog <title> [exists|not-exists|text <expected>|button <name>|enabled <name>]";
     public string Usage => "assert-dialog <title> [exists|not-exists|text|button|enabled]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -246,7 +246,7 @@ public class AssertRibbonCommand : ICommand
     public string Description => "Assert ribbon state: assert-ribbon <tab-name> [button <name>]";
     public string Usage => "assert-ribbon <tab-name> [button <name>]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -381,7 +381,7 @@ public class AssertViewCommand : ICommand
     public string Description => "Assert view tab state: assert-view <name> [active]";
     public string Usage => "assert-view <name> [active]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {

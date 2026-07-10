@@ -1,5 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Threading;
 
 namespace RevitUiController.Commands;
 
@@ -9,7 +10,7 @@ public class WadConnectCommand : ICommand
     public string Description => "Connect to WinAppDriver. Requires WinAppDriver running on localhost:4723";
     public string Usage => "wad-connect";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         var hWnd = revitWindow.Properties.NativeWindowHandle;
         if (hWnd == null || hWnd == IntPtr.Zero)
@@ -37,7 +38,7 @@ public class WadFindCommand : ICommand
     public string Description => "Find element via WinAppDriver: wad-find <name> or wad-find --id <automation-id>";
     public string Usage => "wad-find <name> | wad-find --id <automation-id>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
@@ -89,7 +90,7 @@ public class WadClickCommand : ICommand
     public string Description => "Click element via WinAppDriver: wad-click <name>";
     public string Usage => "wad-click <name>";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args)
+    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
