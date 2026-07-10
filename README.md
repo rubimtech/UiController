@@ -367,6 +367,173 @@ session-end
 
 ## 🏗️ Architecture
 
+### High-level System Overview
+
+```mermaid
+flowchart TB
+    CLI["CLI / dotnet run"] --> GlobalFlags["ParseGlobalFlags\n--pid, --pretty, --screenshot ..."]
+    GlobalFlags --> CommandDispatch["Command Dispatch\n(Dictionary<string, ICommand>)"]
+    CommandDispatch --> RevitSession["RevitSession.Connect()\nFlaUI UIA3 attach"]
+    RevitSession --> ExecuteCmd["cmd.ExecuteAsync(revitWindow, args)"]
+
+    subgraph ExecutionPipeline["Execution Pipeline"]
+        ExecuteCmd --> BeforeState["CaptureState()\n— active dialogs\n— active tab\n— active view"]
+        BeforeState --> UIAction["FlaUI Interaction\nFind → Click / Type / Wait"]
+        UIAction --> AfterState["CaptureState()\nComputeDiff()"]
+        AfterState --> SessionUpdate["SessionContext\nAuto Push/Pop Dialogs"]
+        SessionUpdate --> FormatResult["OutputFormatter\nFormatResult(CommandResult)"]
+        FormatResult --> Recorder["RecorderService\nRecord() if recording"]
+        Recorder --> AutoScreenshot["Auto-screenshot\nif exitCode != 0"]
+    end
+
+    ExecuteCmd --> ExecutionPipeline
+    AutoScreenshot --> STDOUT["STDOUT\nJSON CommandResult"]
+
+    subgraph Fallbacks["Fallback Layers"]
+        direction LR
+        F1["FlaUI UIA3"] --> F2["Win32\nSendMessage"]
+        F2 --> F3["WinAppDriver"]
+    end
+    ExecutionPipeline -.-> Fallbacks
+
+    subgraph Extensions["Extension Modules"]
+        UIMap["UiMap\nPage Object Model\n(YAML)"]
+        Session["SessionContext\nStateful session"]
+        CV["CvMatchClient\nOpenCV Template"]
+        LLM["LlmVisionClient\nLLM Vision API"]
+        Pipe["PipeBridgeClient\nRevit API Named Pipe"]
+    end
+    ExecutionPipeline -.-> Extensions
+```
+
+### Command Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant CLI as CLI User / Agent
+    participant Program as Program.cs
+    participant Session as RevitSession
+    participant Cmd as ICommand
+    participant FlaUI as FlaUI UIA3
+    participant Output as OutputFormatter
+
+    CLI->>Program: dotnet run -- ribbon Wall Architecture
+    Program->>Program: ParseGlobalFlags()
+    Program->>Session: Connect(pid?, processName?)
+    Session-->>Program: AutomationElement revitWindow
+    Program->>Program: CaptureState() ← beforeState
+    Program->>Cmd: ExecuteAsync(revitWindow, ["Wall", "Architecture"])
+    Cmd->>FlaUI: FindFirstEnabledVisible("Architecture")
+    FlaUI-->>Cmd: tabElement
+    Cmd->>FlaUI: TryClick(tabElement)
+    Cmd->>FlaUI: FindFirstEnabledVisible("Wall")
+    FlaUI-->>Cmd: buttonElement
+    Cmd->>FlaUI: TryClick(buttonElement)
+    Cmd-->>Program: exitCode = 0
+    Program->>Program: CaptureState() ← afterState
+    Program->>Program: ComputeDiff(before, after)
+    Program->>SessionContext: PushDialog(newDialogs)
+    Program->>Output: FormatResult({ command, success, diff, data, durationMs })
+    Output-->>CLI: JSON
+    alt exitCode != 0
+        Program->>ScreenshotHelper: CaptureWindow()
+        ScreenshotHelper-->>CLI: base64 screenshot
+    end
+```
+
+### Session State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> NoSession: initial
+
+    NoSession --> Active: session-begin
+    Active --> Active: ribbon Architecture\n→ sets ActiveTab
+    Active --> Active: wait-for "Modify | Walls"\n→ PushDialog("Modify | Walls")
+    Active --> Active: auto-scope\n→ type/click без указания диалога\n→ подставляется ActiveDialog
+    Active --> Active: set varName value\n→ Variables["varName"] = value
+    Active --> Active: $varName in args\n→ подстановка значения
+    Active --> Active: диалог закрылся\n→ PopDialog()
+    Active --> NoSession: session-end
+
+    NoSession --> NoSession: stateless commands
+    (любая команда без session-begin)
+
+    state Active {
+        [*] --> Tracking
+        Tracking --> DialogStack: dialog opened
+        DialogStack --> Tracking: dialog closed
+        Tracking --> VariableScope: set command
+        VariableScope --> Tracking: variable set
+    }
+```
+
+### Element Search Hierarchy
+
+```mermaid
+flowchart TD
+    Query["Search for: 'Wall'"] --> S1["1. FlaUI AutomationId\nMatch by exact AutoId"]
+    S1 -->|Found| Result["✅ Return element"]
+    S1 -->|Not found| S2["2. FlaUI Name contains\n+ LocaleMap RU↔EN"]
+    S2 -->|Found| Result
+    S2 -->|Not found| S3["3. ai-find (6 strategies)\nname → locale → autoId →\nregex → sibling → tab-scoped"]
+    S3 -->|Found| Result
+    S3 -->|Not found| S4["4. UiMap resolve\nlogical name → version-specific selectors"]
+    S4 -->|Found| Result
+    S4 -->|Not found| S5["5. Mouse click by BoundingRect\ncoordinate-based (DPI-aware)"]
+    S5 -->|Found| Result
+    S5 -->|Not found| S6["6. Win32 SendInput / PostMessage\nlow-level Windows API"]
+    S6 -->|Found| Result
+    S6 -->|Not found| S7["7. WinAppDriver\nREST-based fallback driver"]
+    S7 -->|Found| Result
+    S7 -->|Not found| Error["❌ NotFound error\n+ suggestions list"]
+```
+
+### LLM Vision Flow
+
+```mermaid
+sequenceDiagram
+    actor Agent as AI Agent / User
+    participant App as RevitUiController
+    participant SS as ScreenshotHelper
+    participant LLM as LlmVisionClient
+    participant API as LLM Provider API
+    participant Mouse as MouseControl
+    participant Revit as Revit UI
+
+    Agent->>App: llm-click "Wall button on\nArchitecture tab"
+    App->>SS: CaptureBase64(revitWindow.X, Y, W, H)
+    SS-->>App: base64 PNG string
+    App->>LLM: FindElementAsync("Wall button...", base64)
+
+    Note over LLM: RouterAI → OpenAI → Anthropic → Ollama
+
+    LLM->>API: POST /chat/completions\n{ model, messages: [\n  { type: "text", text: prompt },\n  { type: "image_url", image_url: base64 }\n]}
+    API-->>LLM: { choices[0].message.content }
+    LLM->>LLM: ExtractJson() — парсинг { found, x, y, name, confidence }
+    LLM-->>App: LlmVisionResult { X: 450, Y: 320 }
+
+    App->>Revit: MouseControl.ClickAt(450, 320)
+    Revit-->>App: click performed
+    App->>App: CaptureState() → ComputeDiff(before, after)
+    App-->>Agent: CommandResult { success, diff,\nprovder: "routerai", model: "qwen/qwen-vl-max" }
+```
+
+### OpenCV Template Matching Flow
+
+```mermaid
+flowchart LR
+    TPL["template.png\n(icon/cropped image)"] --> CVMatch["CvMatchClient.MatchTemplate()"]
+    SCREEN["Screenshot\nof Revit window"] --> CVMatch
+    CVMatch --> OpenCV["OpenCvSharp4\nCv2.MatchTemplate(\n  src, template,\n  CCoeffNormed)"]
+    OpenCV --> Threshold{"maxVal >= threshold?"}
+    Threshold -->|Yes| Coords["Return { X, Y, Confidence }"]
+    Threshold -->|No| NotFound["Return null → NotFound"]
+    Coords --> Click["MouseControl.ClickAt(X, Y)"]
+```
+
+---
+
 ```
 RevitUiController/
 ├── Program.cs                          # CLI entry, регистрация команд, парсинг флагов
