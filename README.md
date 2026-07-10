@@ -116,6 +116,12 @@ list-items (li) <name> [--max N]          # Прочитать все ListBox/Li
 table-read (tr) <name> [--rows N]         # Прочитать Table с column headers
 
 scroll-to <name> [--parent <p>]           # ScrollIntoView — прокрутить к элементу
+
+invoke <name>                             # Вызвать InvokePattern (надёжнее Click для кнопок)
+
+toggle <name> [on|off]                    # Переключить checkbox/switch через TogglePattern
+
+set-value <name> <text>                   # Установить текст через ValuePattern (надёжнее type)
 ```
 
 **Примеры:**
@@ -123,7 +129,7 @@ scroll-to <name> [--parent <p>]           # ScrollIntoView — прокрути�
 ```powershell
 # Узнать, что можно сделать с элементом
 dotnet run --project tools\RevitUiController -- patterns "OK" --pretty
-# → { patterns: ["Invoke", "Value"], toggleState: null, canInvoke: true, value: "OK" }
+# → { patterns: ["Invoke", "Value"], canInvoke: true, value: "OK" }
 
 # Прочитать все записи ComboBox
 dotnet run --project tools\RevitUiController -- combo-read "Этаж" --pretty
@@ -131,17 +137,89 @@ dotnet run --project tools\RevitUiController -- combo-read "Этаж" --pretty
 
 # Прочитать DataGrid структурированно
 dotnet run --project tools\RevitUiController -- grid-read "Спецификация" --rows 20 --pretty
-# → { dimensions: {rows: 45, columns: 8}, headers: [...], rows: [...] }
+# → { dimensions: {rows: 45, columns: 8}, rows: [...] }
 
-# Дампить UIA-дерево с паттернами
-dotnet run --project tools\RevitUiController -- dump-patterns 2 --type Button --pretty
-# → элементы с [patterns: ["Invoke"]]
+# Invoke-клик (не Mouse Click)
+dotnet run --project tools\RevitUiController -- invoke "OK"
 
-# Развернуть TreeView
-dotnet run --project tools\RevitUiController -- tree-expand "Project Browser" --all --pretty
+# Toggle чекбокса
+dotnet run --project tools\RevitUiController -- toggle "Structural Wall" on
 
-# Прокрутить к элементу перед кликом
-dotnet run --project tools\RevitUiController -- scroll-to "Wall" --parent "TreeView"
+# Установка значения через ValuePattern (без эмуляции клавиатуры)
+dotnet run --project tools\RevitUiController -- set-value "Height" "3000"
+```
+
+### 🔍 Advanced Search & Watch
+
+```powershell
+find-all (fa) <name> [--max N]            # Найти ВСЕ совпадения, не только первое
+  [--type <ct>]
+
+watch <command> [args...]                  # Поллинг команды до выполнения условия
+  --until <condition>                       #   found — команда успешна
+  [--interval <sec>]                       #   gone — команда не успешна
+  [--timeout <sec>]                        #   text:substring — вывод содержит текст
+```
+
+**Примеры:**
+
+```powershell
+# Найти все кнопки "OK"
+dotnet run --project tools\RevitUiController -- find-all "OK" --max 10 --pretty
+
+# Ждать пока появится диалог
+dotnet run --project tools\RevitUiController -- watch find "Modify | Walls" --until found --interval 1 --timeout 30
+
+# Ждать пока закроется диалог
+dotnet run --project tools\RevitUiController -- watch find "Processing..." --until gone --interval 2 --timeout 60
+
+# Ждать пока в выводе появится текст
+dotnet run --project tools\RevitUiController -- watch state --until "text:Modify | Walls" --interval 1 --timeout 15
+```
+
+### ⌨️ Keyboard & Clipboard
+
+```powershell
+key-combo (kc) <keys>                     # Отправить хоткей:
+                                          #   ^c = Ctrl+C, ^v = Ctrl+V
+                                          #   %{F4} = Alt+F4
+                                          #   {TAB} = Tab, {ENTER} = Enter
+                                          #   ^+s = Ctrl+Shift+S
+clipboard-get (cg)                        # Прочитать текст из буфера обмена
+clipboard-set (cs) <text>                 # Записать текст в буфер обмена
+```
+
+**Примеры:**
+
+```powershell
+# Ctrl+Shift+S (Save As)
+dotnet run --project tools\RevitUiController -- key-combo "^+s"
+
+# Копировать выделенный текст в буфер
+dotnet run --project tools\RevitUiController -- key-combo "^c"
+dotnet run --project tools\RevitUiController -- clipboard-get --pretty
+
+# Вставить из буфера
+dotnet run --project tools\RevitUiController -- clipboard-set "3000"
+dotnet run --project tools\RevitUiController -- key-combo "^v"
+```
+
+### 🖼️ Region Tools
+
+```powershell
+screenshot-region (sr) <x> <y> <w> <h>    # Скриншот области экрана
+highlight-region (hr) <x> <y> <w> <h>     # Подсветка области красным overlay
+  [ms]                                      #   длительность в мс (по умолч. 2000)
+```
+
+**Примеры:**
+
+```powershell
+# Скриншот области (левого верхнего угла)
+dotnet run --project tools\RevitUiController -- screenshot-region 0 0 800 600 --screenshot
+
+# Подсветить найденный элемент на 3 секунды
+dotnet run --project tools\RevitUiController -- highlight-region 100 200 300 50 3000
 ```
 
 ### 🔍 UI Exploration
@@ -663,14 +741,18 @@ RevitUiController/
     ├── BatchCommands.cs                 # ps-batch (PropertySheet batch-fill)
     ├── CacheCommands.cs                 # cached-find, cache-clear, cache-stats
     ├── CanvasCommands.cs                # canvas-click, canvas-drag, canvas-zoom, canvas-screenshot
+    ├── ClipboardCommands.cs             # clipboard-get, clipboard-set
     ├── ComboReadCommand.cs              # combo-read (cr) — читать ComboBox items
     ├── DialogCommands.cs                # ps (PropertySheet) — поля, checkbox, combobox, datagrid
     ├── DumpPatternsCommand.cs           # dump-patterns — UIA-дерево с паттернами
     ├── ExplorationCommands.cs           # list-windows, list-controls, find, dump, inspect, info
+    ├── FindAllCommand.cs                # find-all (fa) — найти все совпадения
     ├── FocusCommand.cs                  # focus — переключение на окно
     ├── GridReadCommand.cs               # grid-read (gr) — читать DataGrid через GridPattern
     ├── HighlightCommand.cs              # highlight, highlight-clear
     ├── InteractionCommands.cs           # click, ribbon, switch-view, type, expand, ribbon-tabs, rb
+    ├── InvokeCommand.cs                 # invoke — InvokePattern
+    ├── KeyComboCommand.cs               # key-combo (kc) — SendKeys хоткеи
     ├── ListAllWindowsCommand.cs         # list-all — все окна рабочего стола
     ├── ListItemsCommand.cs              # list-items (li) — читать ListBox/ListView
     ├── LogCommands.cs                   # logs
@@ -679,6 +761,7 @@ RevitUiController/
     ├── PatternsCommand.cs               # patterns — UIA-паттерны элемента
     ├── ProcessCommands.cs               # process-list, process-info
     ├── RecorderCommands.cs              # record-start, record-stop, record-status, record-save
+    ├── RegionCommands.cs                # screenshot-region, highlight-region
     ├── RetryCommands.cs                 # retry-click, retry-dialog
     ├── RevitApiCommand.cs               # revit-api, revit-select, revit-get
     ├── RibbonSmartCommands.cs           # ribbon-find, dropdown, context-tabs, qat, ribbon-panel
@@ -688,13 +771,16 @@ RevitUiController/
     ├── ScriptDiffCommands.cs            # script-list, script-log, script-diff
     ├── ScrollToCommand.cs               # scroll-to — ScrollIntoView
     ├── SessionCommands.cs               # session-begin, session-end, session-status
+    ├── SetValueCommand.cs               # set-value — ValuePattern.SetValue
     ├── StateCommand.cs                  # state
     ├── StatusBarCommands.cs             # statusbar, wait-progress
     ├── TableReadCommand.cs              # table-read (tr) — читать Table с headers
     ├── TaskDialogCommand.cs             # taskdialog
+    ├── ToggleCommand.cs                 # toggle — TogglePattern
     ├── TreeExpandCommand.cs             # tree-expand — развернуть TreeView
     ├── UiMapCommands.cs                 # uimap-load/save/resolve/register/list/auto
     ├── WaitForCommand.cs                # wait-for, wait-close, wait-element
+    ├── WatchCommand.cs                  # watch — polling wrapper
     └── Win32Commands.cs                 # win32-click, win32-enum
 ```
 

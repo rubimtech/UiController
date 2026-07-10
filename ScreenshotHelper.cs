@@ -78,4 +78,9 @@ public static class ScreenshotHelper
         }
         catch { return null; }
     }
+
+    public static string? CaptureRegion(int x, int y, int w, int h)
+    {
+        return CaptureBase64(x, y, w, h);
+    }
 }

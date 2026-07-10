@@ -23,9 +23,11 @@ public static class OutputFormatter
 
     public static string FormatResult(CommandResult result, bool pretty = false)
     {
-        if (pretty)
-            return JsonSerializer.Serialize(result, PrettyJsonOptions);
-        return JsonSerializer.Serialize(result, JsonOptions) + Environment.NewLine;
+        var json = pretty
+            ? JsonSerializer.Serialize(result, PrettyJsonOptions)
+            : JsonSerializer.Serialize(result, JsonOptions) + Environment.NewLine;
+        try { Program.LastOutput = json; } catch { }
+        return json;
     }
 
     public static string FormatError(string code, string query, List<string>? suggestions = null, bool pretty = false)

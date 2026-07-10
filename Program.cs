@@ -19,6 +19,12 @@ public static class Program
         ["gr"] = "grid-read",
         ["li"] = "list-items",
         ["tr"] = "table-read",
+        ["fa"] = "find-all",
+        ["cg"] = "clipboard-get",
+        ["cs"] = "clipboard-set",
+        ["kc"] = "key-combo",
+        ["sr"] = "screenshot-region",
+        ["hr"] = "highlight-region",
     };
 
     public static bool IsPretty { get; set; }
@@ -32,6 +38,7 @@ public static class Program
     public static WindowSession? CurrentSession { get; set; }
     public static WindowSession? CurrentWindowSession { get; set; }
     public static DesktopWindowManager? WindowManager { get; set; }
+    public static string? LastOutput { get; set; }
 
     static Program()
     {
@@ -135,6 +142,16 @@ public static class Program
         Register(new TableReadCommand());
         Register(new ScrollToCommand());
         Register(new DumpPatternsCommand());
+        Register(new InvokeCommand());
+        Register(new ToggleCommand());
+        Register(new SetValueCommand());
+        Register(new FindAllCommand());
+        Register(new WatchCommand());
+        Register(new KeyComboCommand());
+        Register(new ClipboardGetCommand());
+        Register(new ClipboardSetCommand());
+        Register(new ScreenshotRegionCommand());
+        Register(new HighlightRegionCommand());
 
         if (UiMap.TryLoadDefault() && Verbosity == "full")
             Console.Error.WriteLine($"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
@@ -199,6 +216,8 @@ public static class Program
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
                 var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray());
+
+                try { LastOutput = Console.Out?.ToString(); } catch { }
 
                 if (SessionContext.IsActive && beforeState != null)
                 {
@@ -285,6 +304,25 @@ UIA Pattern Tools (read/interact with ANY UI control without screenshots):
   list-items (li) <name> [--max N]      Read all ListBox/ListView items
   table-read (tr) <name> [--rows N]     Read Table with column headers
   scroll-to <name> [--parent <p>]       Scroll element into view (ScrollItemPattern)
+
+Advanced Pattern Actions:
+  invoke <name>                         Invoke control via InvokePattern (not Click)
+  toggle <name> [on|off]                Toggle checkbox/switch via TogglePattern
+  set-value <name> <text>               Set text via ValuePattern (more reliable than type)
+
+Search & Watch:
+  find-all (fa) <name> [--max N]        Find ALL matching controls, not just first
+  watch <cmd> [args] --until <cond>     Poll a command until condition met (found/gone/enabled/disabled/text:...)
+      [--interval <sec>] [--timeout <sec>]
+
+Keyboard & Clipboard:
+  key-combo (kc) <keys>                 Send keyboard shortcut (^c=Ctrl+C, %{F4}=Alt+F4, {TAB})
+  clipboard-get (cg)                    Read text from clipboard
+  clipboard-set (cs) <text>             Write text to clipboard
+
+Region & Screenshot:
+  screenshot-region (sr) <x> <y> <w> <h>  Capture screenshot of a screen region
+  highlight-region (hr) <x> <y> <w> <h>   Highlight a screen region with overlay
 
 Commands (Revit-focused, work with --process-name or --pid):
   list-windows (lw)                     List all Revit windows/dialogs
