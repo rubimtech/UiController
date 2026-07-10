@@ -2,58 +2,28 @@ using FlaUI.Core.AutomationElements;
 
 namespace RevitUiController;
 
+[Obsolete("Use RetryPolicy instead. Will be removed in a future version.")]
 public static class FlakyRetry
 {
     public static T? Retry<T>(Func<T?> action, int maxAttempts = 3, int initialDelayMs = 500, Func<T?, bool>? successCheck = null) where T : class
     {
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            try
-            {
-                var result = action();
-                if (successCheck == null || successCheck(result))
-                    return result;
-
-                if (attempt < maxAttempts)
-                {
-                    var delay = initialDelayMs * (int)Math.Pow(2, attempt - 1);
-                    Console.Error.WriteLine($"[FlakyRetry] Attempt {attempt}/{maxAttempts} failed, retrying in {delay}ms...");
-                    Thread.Sleep(delay);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (attempt >= maxAttempts) throw;
-                var delay = initialDelayMs * (int)Math.Pow(2, attempt - 1);
-                Console.Error.WriteLine($"[FlakyRetry] Attempt {attempt}/{maxAttempts} threw: {ex.Message}, retrying in {delay}ms...");
-                Thread.Sleep(delay);
-            }
-        }
-        return null;
+        return RetryPolicy.RetryAsync(
+            () => Task.FromResult(action()),
+            maxAttempts,
+            initialDelayMs,
+            RetryPolicy.BackoffMode.Exponential,
+            successCheck
+        ).GetAwaiter().GetResult();
     }
 
     public static bool RetryAction(Action action, int maxAttempts = 3, int initialDelayMs = 500)
     {
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            try
-            {
-                action();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                if (attempt >= maxAttempts)
-                {
-                    Console.Error.WriteLine($"[FlakyRetry] All {maxAttempts} attempts failed: {ex.Message}");
-                    return false;
-                }
-                var delay = initialDelayMs * (int)Math.Pow(2, attempt - 1);
-                Console.Error.WriteLine($"[FlakyRetry] Attempt {attempt}/{maxAttempts} failed: {ex.Message}, retrying in {delay}ms...");
-                Thread.Sleep(delay);
-            }
-        }
-        return false;
+        return RetryPolicy.RetryActionAsync(
+            () => { action(); return Task.CompletedTask; },
+            maxAttempts,
+            initialDelayMs,
+            RetryPolicy.BackoffMode.Exponential
+        ).GetAwaiter().GetResult();
     }
 
     public static AutomationElement? RetryFind(AutomationElement root, string name, int maxAttempts = 3, int initialDelayMs = 500)

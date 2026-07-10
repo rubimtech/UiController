@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -22,7 +22,7 @@ public class Win32ClickCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -37,7 +37,7 @@ public class Win32ClickCommand : ICommand
                     Command = "win32-click",
                     Success = true,
                     Data = new { method = "uia_fallback", target = name }
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return Task.FromResult(0);
             }
 
@@ -48,12 +48,12 @@ public class Win32ClickCommand : ICommand
                 Success = clicked,
                 Error = clicked ? null : "Win32 SendMessage click failed",
                 Data = new { method = "win32_sendmessage", target = name }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(clicked ? 0 : 1);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("Win32Error", name, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("Win32Error", name, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }
@@ -72,7 +72,7 @@ public class Win32EnumCommand : ICommand
             var hWnd = revitWindow.Properties.NativeWindowHandle;
             if (hWnd == null || hWnd == IntPtr.Zero)
             {
-                Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.GlobalOptions));
                 return Task.FromResult(1);
             }
 
@@ -84,12 +84,12 @@ public class Win32EnumCommand : ICommand
                 Command = "win32-enum",
                 Success = true,
                 Data = new { count = list.Count, windows = list }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("Win32Error", "enum", [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("Win32Error", "enum", [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

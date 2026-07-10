@@ -19,7 +19,7 @@ public class RibbonFindCommand : ICommand
         var mMainTabs = FindChildByAutoId(rootChildren, "mMainTabs");
         if (mMainTabs == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -28,7 +28,7 @@ public class RibbonFindCommand : ICommand
         if (tabResult == null)
         {
             var suggestions = GetTabNames(mMainTabs);
-            Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.GlobalOptions));
             return 1;
         }
 
@@ -54,7 +54,7 @@ public class RibbonFindCommand : ICommand
                 },
                 DurationMs = elapsed
             };
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return 0;
         }
 
@@ -66,7 +66,7 @@ public class RibbonFindCommand : ICommand
         var panel = panels.FirstOrDefault(p => p.panelName.Contains(panelName, StringComparison.OrdinalIgnoreCase));
         if (panel.panelName == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", $"panel '{panelName}'", panels.Select(p => p.panelName).ToList(), Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"panel '{panelName}'", panels.Select(p => p.panelName).ToList(), Program.GlobalOptions));
             return 1;
         }
 
@@ -87,7 +87,7 @@ public class RibbonFindCommand : ICommand
                 },
                 DurationMs = elapsed
             };
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return 0;
         }
 
@@ -95,7 +95,7 @@ public class RibbonFindCommand : ICommand
         var matchedBtn = panel.buttons.FirstOrDefault(b => b.btnName.Contains(buttonName, StringComparison.OrdinalIgnoreCase));
         if (matchedBtn.btnName == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", panel.buttons.Select(b => b.btnName).ToList(), Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", panel.buttons.Select(b => b.btnName).ToList(), Program.GlobalOptions));
             return 1;
         }
 
@@ -112,7 +112,7 @@ public class RibbonFindCommand : ICommand
             },
             DurationMs = elapsed2
         };
-        Console.Write(OutputFormatter.FormatResult(result2, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result2, Program.GlobalOptions));
         return 0;
     }
 
@@ -339,7 +339,7 @@ public class DropDownCommand : ICommand
 
         if (args.Length < 2)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "dropdown <button-name> <item-name> [tab-name]", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "dropdown <button-name> <item-name> [tab-name]", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -353,7 +353,7 @@ public class DropDownCommand : ICommand
             var tab = FindFirstEnabledVisible(revitWindow, tabName);
             if (tab == null)
             {
-                Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", null, Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", null, Program.GlobalOptions));
                 return 1;
             }
             TryClick(tab, tabName);
@@ -367,7 +367,7 @@ public class DropDownCommand : ICommand
 
         if (button == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"button '{buttonName}'", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -375,7 +375,7 @@ public class DropDownCommand : ICommand
 
         if (!TryClick(button, buttonName))
         {
-            Console.Write(OutputFormatter.FormatError("ClickFailed", buttonName, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ClickFailed", buttonName, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -384,13 +384,13 @@ public class DropDownCommand : ICommand
         var dropdownItem = FindFirstEnabledVisible(revitWindow, itemName);
         if (dropdownItem == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", $"dropdown item '{itemName}'", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"dropdown item '{itemName}'", null, Program.GlobalOptions));
             return 1;
         }
 
         if (!TryClick(dropdownItem, itemName))
         {
-            Console.Write(OutputFormatter.FormatError("ClickFailed", itemName, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ClickFailed", itemName, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -410,7 +410,7 @@ public class DropDownCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 }
@@ -429,7 +429,7 @@ public class ContextTabsCommand : ICommand
         var mMainTabs = FindChildByAutoId(rootChildren, "mMainTabs");
         if (mMainTabs == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -467,7 +467,7 @@ public class ContextTabsCommand : ICommand
                 : new { tabs = contextualTabs, count = contextualTabs.Count },
             DurationMs = elapsed
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 
@@ -494,7 +494,7 @@ public class QatCommand : ICommand
         var qat = FindQat(revitWindow);
         if (qat == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", "Quick Access Toolbar (mQAT)", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", "Quick Access Toolbar (mQAT)", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -532,7 +532,7 @@ public class QatCommand : ICommand
 
             if (targetButton == null)
             {
-                Console.Write(OutputFormatter.FormatError("NotFound", $"QAT button '{targetName}'", buttons.Select(b => { var d = (IDictionary<string, object>)b; return d["name"]?.ToString() ?? ""; }).ToList(), Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("NotFound", $"QAT button '{targetName}'", buttons.Select(b => { var d = (IDictionary<string, object>)b; return d["name"]?.ToString() ?? ""; }).ToList(), Program.GlobalOptions));
                 return 1;
             }
 
@@ -554,7 +554,7 @@ public class QatCommand : ICommand
 
             if (targetEl == null || !TryClick(targetEl, nameStr))
             {
-                Console.Write(OutputFormatter.FormatError("ClickFailed", nameStr, null, Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("ClickFailed", nameStr, null, Program.GlobalOptions));
                 return 1;
             }
 
@@ -574,7 +574,7 @@ public class QatCommand : ICommand
             };
             if (Program.IsScreenshot)
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return 0;
         }
 
@@ -588,7 +588,7 @@ public class QatCommand : ICommand
                 : new { buttons, count = buttons.Count },
             DurationMs = elapsed2
         };
-        Console.Write(OutputFormatter.FormatResult(result2, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result2, Program.GlobalOptions));
         return 0;
     }
 
@@ -647,7 +647,7 @@ public class RibbonPanelCommand : ICommand
 
         if (args.Length == 0)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "ribbon-panel <tab-name> [panel-name]", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "ribbon-panel <tab-name> [panel-name]", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -657,7 +657,7 @@ public class RibbonPanelCommand : ICommand
         var mMainTabs = FindChildByAutoId(rootChildren, "mMainTabs");
         if (mMainTabs == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", "mMainTabs", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -665,7 +665,7 @@ public class RibbonPanelCommand : ICommand
         if (tab == null)
         {
             var suggestions = GetTabButtonNames(mMainTabs);
-            Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", $"tab '{tabName}'", suggestions, Program.GlobalOptions));
             return 1;
         }
 
@@ -692,7 +692,7 @@ public class RibbonPanelCommand : ICommand
                 : new { tab = tabName, panels = panels.Select(p => new { panel = p.panelName, buttons = p.buttons.Select(b => new { name = b.btnName, automationId = b.btnId }).ToList() }).ToList(), panelCount = panels.Count },
             DurationMs = elapsed
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 

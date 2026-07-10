@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -31,7 +31,7 @@ public class SafeClickCommand : ICommand
                 Success = true,
                 Data = new { action = "skipped", reason = "element_not_found" },
                 Diff = OutputFormatter.ComputeDiff(before, after)
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         
@@ -45,7 +45,7 @@ public class SafeClickCommand : ICommand
                 Success = true,
                 Data = new { action = "clicked", target = name },
                 Diff = OutputFormatter.ComputeDiff(before, after)
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public class SafeClickCommand : ICommand
                 Success = false,
                 Error = ex.Message,
                 Diff = OutputFormatter.ComputeDiff(before, after)
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -39,7 +39,7 @@ public class RevitApiCommand : ICommand
                 Command = "revit-api",
                 Success = false,
                 Error = "Failed to connect to ReVibe Named Pipe. Is Revit running with the plugin loaded?"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -51,7 +51,7 @@ public class RevitApiCommand : ICommand
                 Command = "revit-api",
                 Success = false,
                 Error = "No response from Revit pipe (timeout or disconnect)"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -63,7 +63,7 @@ public class RevitApiCommand : ICommand
             Command = "revit-api",
             Success = true,
             Data = new { command, response = parsed, raw = responseJson }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -90,7 +90,7 @@ public class RevitApiSelectCommand : ICommand
                 Command = "revit-select",
                 Success = false,
                 Error = "Failed to connect to ReVibe pipe"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -104,7 +104,7 @@ public class RevitApiSelectCommand : ICommand
             Success = ok,
             Error = ok ? null : "Failed to select elements",
             Data = new { ids, response }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(ok ? 0 : 1);
     }
 }
@@ -140,7 +140,7 @@ public class RevitApiGetCommand : ICommand
                 Command = "revit-get",
                 Success = false,
                 Error = "Failed to connect to ReVibe pipe"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -156,7 +156,7 @@ public class RevitApiGetCommand : ICommand
             Success = ok,
             Error = ok ? null : "No response",
             Data = new { query, response = parsed }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(ok ? 0 : 1);
     }
 }

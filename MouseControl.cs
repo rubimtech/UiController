@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Windows;
 using FlaUI.Core.AutomationElements;
 
 namespace RevitUiController;
@@ -53,11 +54,49 @@ public static class MouseControl
 
     public static async Task ClickAt(int x, int y, CancellationToken ct = default)
     {
+        if (Program.IsUiaOnly)
+        {
+            await ClickAtUia(x, y, ct);
+            return;
+        }
+
         SetCursorPos(x, y);
         await Task.Delay(50, ct);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
         await Task.Delay(30, ct);
         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+    }
+
+    private static async Task ClickAtUia(int x, int y, CancellationToken ct = default)
+    {
+        try
+        {
+            var automation = Program.Automation;
+            if (automation != null)
+            {
+                var element = automation.FromPoint(new Point(x, y));
+                if (element != null)
+                {
+                    element.Click();
+                    await Task.Delay(30, ct);
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Warn("Safe", $"ClickAtUia InvokePattern: {ex.Message}");
+        }
+
+        var wad = Program.WadClient;
+        if (wad != null && wad.IsConnected)
+        {
+            wad.ClickAt(x, y);
+            await Task.Delay(30, ct);
+            return;
+        }
+
+        Console.Error.WriteLine("ClickAtUia: no UIA automation or WinAppDriver available");
     }
 
     public static async Task ClickElement(AutomationElement element, CancellationToken ct = default)

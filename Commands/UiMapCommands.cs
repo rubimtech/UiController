@@ -22,7 +22,7 @@ public class UiMapLoadCommand : ICommand
 
         if (!loaded)
         {
-            Console.Write(OutputFormatter.FormatError("LoadFailed", path, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("LoadFailed", path, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -34,7 +34,7 @@ public class UiMapLoadCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -60,12 +60,12 @@ public class UiMapSaveCommand : ICommand
             };
             if (Program.IsScreenshot)
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("SaveFailed", ex.Message, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("SaveFailed", ex.Message, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }
@@ -81,7 +81,7 @@ public class UiMapResolveCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -107,7 +107,7 @@ public class UiMapResolveCommand : ICommand
         if (candidates.Count == 0)
         {
             var suggestions = UiMap.GetAllEntries().Keys.Take(10).ToList();
-            Console.Write(OutputFormatter.FormatError("NotFound", logicalName, suggestions, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", logicalName, suggestions, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -133,7 +133,7 @@ public class UiMapResolveCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -148,7 +148,7 @@ public class UiMapRegisterCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -184,7 +184,7 @@ public class UiMapRegisterCommand : ICommand
         logicalName = string.Join(" ", nameArgs);
         if (string.IsNullOrWhiteSpace(logicalName))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "logical-name is required", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "logical-name is required", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -208,7 +208,7 @@ public class UiMapRegisterCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -223,7 +223,7 @@ public class UiMapListCommand : ICommand
     {
         if (!UiMap.IsLoaded)
         {
-            Console.Write(OutputFormatter.FormatError("NotLoaded", "no uimap loaded", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotLoaded", "no uimap loaded", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -253,7 +253,7 @@ public class UiMapListCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -268,7 +268,7 @@ public class UiMapAutoCommand : ICommand
     {
         if (args.Length < 2)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -278,7 +278,7 @@ public class UiMapAutoCommand : ICommand
         var found = AutomationHelper.FindFirstEnabledVisible(revitWindow, elementName);
         if (found == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", elementName, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", elementName, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -314,7 +314,7 @@ public class UiMapAutoCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

@@ -33,6 +33,9 @@ public static class ScreenshotHelper
 
     public static Bitmap? CaptureBitmap(int x, int y, int width, int height)
     {
+        if (Program.IsUiaOnly)
+            return CaptureBitmapUia(x, y, width, height);
+
         try
         {
             var bitmap = new Bitmap(width, height);
@@ -58,6 +61,9 @@ public static class ScreenshotHelper
 
     public static string? CaptureBase64(int x, int y, int width, int height)
     {
+        if (Program.IsUiaOnly)
+            return CaptureBase64Uia(x, y, width, height);
+
         try
         {
             using var bitmap = new Bitmap(width, height);
@@ -101,5 +107,47 @@ public static class ScreenshotHelper
     public static string? CaptureRegion(int x, int y, int w, int h)
     {
         return CaptureBase64(x, y, w, h);
+    }
+
+    private static Bitmap? CaptureBitmapUia(int x, int y, int width, int height)
+    {
+        var b64 = GetWadScreenshot();
+        if (b64 == null) return null;
+        try
+        {
+            var bytes = Convert.FromBase64String(b64);
+            using var full = new Bitmap(new MemoryStream(bytes));
+            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+                x + width > full.Width || y + height > full.Height)
+                return new Bitmap(full);
+            return full.Clone(new Rectangle(x, y, width, height), PixelFormat.Format32bppArgb);
+        }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"CaptureBitmapUia: {ex.Message}"); return null; }
+    }
+
+    private static string? CaptureBase64Uia(int x, int y, int width, int height)
+    {
+        var b64 = GetWadScreenshot();
+        if (b64 == null) return null;
+        try
+        {
+            var bytes = Convert.FromBase64String(b64);
+            using var full = new Bitmap(new MemoryStream(bytes));
+            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+                x + width > full.Width || y + height > full.Height)
+                return b64;
+            using var cropped = full.Clone(new Rectangle(x, y, width, height), PixelFormat.Format32bppArgb);
+            using var ms = new MemoryStream();
+            cropped.Save(ms, ImageFormat.Png);
+            return Convert.ToBase64String(ms.ToArray());
+        }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"CaptureBase64Uia: {ex.Message}"); return null; }
+    }
+
+    private static string? GetWadScreenshot()
+    {
+        var wad = Program.WadClient;
+        if (wad == null || !wad.IsConnected) return null;
+        return wad.CaptureScreenshot();
     }
 }

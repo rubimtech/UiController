@@ -21,7 +21,7 @@ public class StateCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

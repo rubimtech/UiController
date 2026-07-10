@@ -23,7 +23,7 @@ public class ComboReadCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -102,7 +102,7 @@ public class ComboReadCommand : ICommand
                 items
             }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 

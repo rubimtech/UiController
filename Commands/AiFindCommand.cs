@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
@@ -18,7 +18,7 @@ public class AiFindCommand : ICommand
 
         if (args.Length == 0 || args[0].StartsWith("--"))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "ai-find <query> [options]", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "ai-find <query> [options]", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -135,7 +135,7 @@ public class AiFindCommand : ICommand
                     }
                 },
                 DurationMs = elapsed
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -152,7 +152,7 @@ public class AiFindCommand : ICommand
                 bestMatch = candidates[0].name
             },
             DurationMs = elapsed
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 

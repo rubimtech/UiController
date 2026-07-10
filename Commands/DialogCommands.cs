@@ -1,4 +1,4 @@
-using FlaUI.Core;
+﻿using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
@@ -29,7 +29,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -41,7 +41,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = true,
                 Data = new { dialog = dialog.Name, fields }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -53,7 +53,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = true,
                 Data = new { dialog = dialog.Name, tabs }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -69,7 +69,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = false,
                     Error = $"Field with label '{label}' not found"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
             field.Focus();
@@ -81,7 +81,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = true,
                 Data = new { action = "type", label, value }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -97,7 +97,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = false,
                     Error = $"Checkbox with label '{label}' not found"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
             var currentState = GetIsChecked(checkbox);
@@ -108,7 +108,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = true,
                     Data = new { action = "read", label, @checked = currentState }
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 0;
             }
             checkbox.Click();
@@ -117,7 +117,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = true,
                 Data = new { action = "toggle", label, from = currentState, to = newState }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -133,7 +133,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = false,
                     Error = $"ComboBox with label '{label}' not found"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
             combo.Click();
@@ -147,7 +147,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = true,
                     Data = new { action = "select", label, option }
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 0;
             }
             Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -155,7 +155,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = false,
                 Error = $"Option '{option}' not found in combobox '{label}'"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -170,7 +170,7 @@ public class PropertySheetCommand : ICommand
                     Command = "ps",
                     Success = false,
                     Error = $"Button '{buttonName}' not found in dialog"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
             button.Click();
@@ -179,7 +179,7 @@ public class PropertySheetCommand : ICommand
                 Command = "ps",
                 Success = true,
                 Data = new { action = "click", button = buttonName }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 

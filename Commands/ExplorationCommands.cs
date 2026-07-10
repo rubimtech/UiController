@@ -26,7 +26,7 @@ public class ListWindowsCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -44,7 +44,7 @@ public class ListControlsCommand : ICommand
 
         if (windows.Count == 0)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", filter ?? "", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", filter ?? "", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -59,7 +59,7 @@ public class ListControlsCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -77,7 +77,7 @@ public class FindCommand : ICommand
 
         if (results.Count == 0)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -92,7 +92,7 @@ public class FindCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -124,7 +124,7 @@ public class InfoCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -180,7 +180,7 @@ public class DumpCommand : ICommand
         };
         if (Program.IsScreenshot)
             result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 
@@ -259,14 +259,14 @@ public class InspectCommand : ICommand
             };
             if (Program.IsScreenshot)
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return Task.FromResult(0);
         }
 
         var target = FollowPath(revitWindow, args);
         if (target == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", string.Join(" ", args), null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", string.Join(" ", args), null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -302,12 +302,12 @@ public class InspectCommand : ICommand
             };
             if (Program.IsScreenshot)
                 result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-            Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch
         {
-            Console.Write(OutputFormatter.FormatError("InspectError", string.Join(" ", args), null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InspectError", string.Join(" ", args), null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

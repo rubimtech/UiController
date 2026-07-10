@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
@@ -48,14 +48,14 @@ public class CvMatchCommand : ICommand
         if (templatePath == null)
         {
             Console.Write(OutputFormatter.FormatError("TemplateNotFound", templateName,
-                ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.IsPretty));
+                ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.GlobalOptions));
             return 1;
         }
 
         using var template = CvMatchClient.LoadTemplate(templatePath);
         if (template == null)
         {
-            Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -73,7 +73,7 @@ public class CvMatchCommand : ICommand
             screenshot = ScreenshotHelper.CaptureBitmap(revitWindow);
             if (screenshot == null)
             {
-                Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.GlobalOptions));
                 return 1;
             }
             try
@@ -91,7 +91,7 @@ public class CvMatchCommand : ICommand
 
         if (screenshot == null)
         {
-            Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "region", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "region", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -115,7 +115,7 @@ public class CvMatchCommand : ICommand
                     Success = false,
                     Error = $"Template '{templateName}' not found (threshold={threshold})",
                     Data = data,
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
 
@@ -137,7 +137,7 @@ public class CvMatchCommand : ICommand
                     absoluteScreen = new { x = absX, y = absY },
                     region = region.HasValue ? $"{region.Value.x},{region.Value.y},{region.Value.w},{region.Value.h}" : null,
                 },
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
     }
@@ -185,14 +185,14 @@ public class CvClickCommand : ICommand
         if (templatePath == null)
         {
             Console.Write(OutputFormatter.FormatError("TemplateNotFound", templateName,
-                ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.IsPretty));
+                ["Check template name or place .png in ./templates/ or ./cv-templates/"], Program.GlobalOptions));
             return 1;
         }
 
         using var template = CvMatchClient.LoadTemplate(templatePath);
         if (template == null)
         {
-            Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("TemplateLoadFailed", templatePath, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -223,7 +223,7 @@ public class CvClickCommand : ICommand
 
         if (screenshot == null)
         {
-            Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ScreenshotFailed", "Revit window", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -243,7 +243,7 @@ public class CvClickCommand : ICommand
                         threshold,
                         found = false,
                     },
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
 
@@ -269,7 +269,7 @@ public class CvClickCommand : ICommand
                     matchSize = new { w = match.TemplateWidth, h = match.TemplateHeight },
                 },
                 Diff = OutputFormatter.ComputeDiff(before, after),
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
     }
@@ -315,7 +315,7 @@ public class CvListTemplatesCommand : ICommand
                     };
                 }),
             },
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }

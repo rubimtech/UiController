@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
@@ -47,7 +47,7 @@ public class CanvasClickCommand : ICommand
             Success = true,
             Data = new { x, y, relative },
             Diff = OutputFormatter.ComputeDiff(before, after)
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 
@@ -127,7 +127,7 @@ public class CanvasDragCommand : ICommand
             Success = true,
             Data = new { from = new { x = x1, y = y1 }, to = new { x = x2, y = y2 }, relative },
             Diff = OutputFormatter.ComputeDiff(before, after)
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 
@@ -175,12 +175,12 @@ public class CanvasZoomCommand : ICommand
                 Success = true,
                 Data = new { factor, centerX = px, centerY = py },
                 Diff = OutputFormatter.ComputeDiff(before, after)
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("CanvasZoomError", factor.ToString(), [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("CanvasZoomError", factor.ToString(), [ex.Message], Program.GlobalOptions));
             return 1;
         }
     }
@@ -206,7 +206,7 @@ public class CanvasScreenshotCommand : ICommand
             Error = ss == null ? "Failed to capture viewport screenshot" : null,
             Data = new { hasScreenshot = ss != null },
             Screenshot = ss
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return ss != null ? 0 : 1;
     }
 

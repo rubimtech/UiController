@@ -22,7 +22,7 @@ public class ListAllWindowsCommand : ICommand
         var mgr = Program.WindowManager;
         if (mgr == null)
         {
-            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -49,7 +49,7 @@ public class ListAllWindowsCommand : ICommand
                       minimized = w.IsMinimized
                   }).ToList() }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 

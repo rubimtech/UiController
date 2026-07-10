@@ -15,14 +15,14 @@ public class ActiveCommand : ICommand
         var mgr = Program.WindowManager;
         if (mgr == null)
         {
-            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
         var info = mgr.GetActiveWindowInfo();
         if (info == null)
         {
-            Console.Write(OutputFormatter.FormatError("NoActiveWindow", "", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoActiveWindow", "", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -52,7 +52,7 @@ public class ActiveCommand : ICommand
                 }
             }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

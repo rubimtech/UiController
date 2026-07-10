@@ -1,4 +1,6 @@
+using FlaUI.UIA3;
 using RevitUiController.Commands;
+using RevitUiController.Models;
 
 namespace RevitUiController;
 
@@ -25,6 +27,7 @@ public static class Program
         ["kc"] = "key-combo",
         ["sr"] = "screenshot-region",
         ["hr"] = "highlight-region",
+        ["ri"] = "revit-instances",
     };
 
     public static CancellationTokenSource Cts { get; } = new();
@@ -41,6 +44,11 @@ public static class Program
     public static DesktopWindowManager? WindowManager { get; set; }
     public static string? LastOutput { get; set; }
     public static AutomationEventService? EventService { get; set; }
+    public static bool IsUiaOnly { get; set; }
+    public static WinAppDriverClient? WadClient { get; set; }
+    public static UIA3Automation? Automation { get; set; }
+    public static RevitInstanceManager InstanceManager { get; } = new();
+    public static ProgramOptions GlobalOptions => ProgramOptions.FromGlobalFlags();
 
     static Program()
     {
@@ -115,6 +123,8 @@ public static class Program
         Register(new RetryClickCommand());
         Register(new RetryDialogCommand());
         Register(new AiFindCommand());
+        Register(new RecordVideoStartCommand());
+        Register(new RecordVideoStopCommand());
 
         Register(new CvMatchCommand());
         Register(new CvClickCommand());
@@ -159,6 +169,11 @@ public static class Program
         Register(new ListenStopCommand());
         Register(new EventLogCommand());
 
+        Register(new RevitInstancesCommand());
+        Register(new RevitLaunchCommand());
+        Register(new MultiExecCommand());
+        Register(new SessionSwitchCommand());
+
         if (UiMap.TryLoadDefault() && Verbosity == "full")
             Console.Error.WriteLine($"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
     }
@@ -166,6 +181,14 @@ public static class Program
     private static void Register(ICommand cmd)
     {
         Commands[cmd.Name] = cmd;
+    }
+
+    public static ICommand? GetCommand(string name)
+    {
+        var lower = name.ToLowerInvariant();
+        if (Aliases.TryGetValue(lower, out var resolved))
+            lower = resolved;
+        return Commands.TryGetValue(lower, out var cmd) ? cmd : null;
     }
 
     public static async Task<int> Main(string[] args)
@@ -223,6 +246,7 @@ public static class Program
 
             CurrentSession = session;
             CurrentWindowSession = session;
+            Automation = session.Automation;
 
             if (!UiMap.IsLoaded)
             {
@@ -297,6 +321,8 @@ public static class Program
                 ConnectTimeoutSec = timeout;
             else if (args[i] == "--non-interactive")
                 SafetyGuard.IsNonInteractive = true;
+            else if (args[i] == "--uia-only")
+                IsUiaOnly = true;
             else
                 result.Add(args[i]);
         }
@@ -336,6 +362,7 @@ Global flags:
   --active                         Connect to the currently active/foreground window
   --connect-timeout <sec>          Wait timeout for process (default: 30)
   --non-interactive                Auto-reject destructive actions without prompt
+  --uia-only                       UIA-only mode (no GDI/mouse_event for RDP/headless)
  
 Desktop Window Management (any process):
   list-all (la) [--filter <txt>]        List ALL visible top-level windows on desktop
@@ -430,6 +457,8 @@ Commands (Revit-focused, work with --process-name or --pid):
   script-list (sl) [--path <dir>]       List available .rvs script files
   script-log (slog) [--file <p>]        Git log for .rvs scripts
   script-diff (sdiff) [--file <p>]      Git diff for .rvs scripts
+  record-video [--fps 5] [--quality]    Start FFmpeg screen recording (gdigrab)
+  record-video-stop                     Stop recording, save .mp4 to screenshots/
   record-save [--path <file.rvs>]       Save recording without stopping
   process-list                          List running Revit processes
   process-info                          Show connected Revit process details

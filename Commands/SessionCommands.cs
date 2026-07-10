@@ -36,7 +36,7 @@ public class SessionBeginCommand : ICommand
             Success = true,
             Data = SessionContext.Status()
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -58,7 +58,7 @@ public class SessionEndCommand : ICommand
             Success = true,
             Data = snapshot
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -77,7 +77,7 @@ public class SessionStatusCommand : ICommand
             Success = true,
             Data = SessionContext.Status()
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
@@ -57,7 +57,7 @@ public class ScriptListCommand : ICommand
                     gitTracked = trackedFiles?.Contains(f.Path) == true || trackedFiles?.Contains(Path.GetFileName(f.Path)) == true
                 })
             }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 
@@ -126,7 +126,7 @@ public class ScriptLogCommand : ICommand
         {
             if (!File.Exists(file))
             {
-                Console.Write(OutputFormatter.FormatError("FileNotFound", file, new List<string> { "Check the file path" }, Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("FileNotFound", file, new List<string> { "Check the file path" }, Program.GlobalOptions));
                 return Task.FromResult(1);
             }
             gitOutput = RunGit($"log --oneline -{last} -- \"{file}\"");
@@ -144,7 +144,7 @@ public class ScriptLogCommand : ICommand
                 Success = false,
                 Error = "Git is not available or this is not a git repository",
                 Data = new { hint = "Run 'git init' or install git" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -160,7 +160,7 @@ public class ScriptLogCommand : ICommand
             Command = "script-log",
             Success = true,
             Data = new { count = entries.Count, entries }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 
@@ -263,7 +263,7 @@ public class ScriptDiffCommand : ICommand
                 Success = false,
                 Error = "Git is not available, not a git repository, or no changes found",
                 Data = new { hint = "Make sure git is installed and the repo has .rvs commits" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -278,7 +278,7 @@ public class ScriptDiffCommand : ICommand
                 commitHash = commit,
                 commitMessage = commitMsg
             }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 

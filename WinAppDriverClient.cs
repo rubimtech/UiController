@@ -49,6 +49,48 @@ public class WinAppDriverClient : IDisposable
         }
     }
 
+    public string? CaptureScreenshot()
+    {
+        if (_sessionId == null) return null;
+        try
+        {
+            var response = _client.GetAsync($"{BaseUrl}/wd/hub/session/{_sessionId}/screenshot").GetAwaiter().GetResult();
+            var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (!response.IsSuccessStatusCode) return null;
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement.GetProperty("value").GetString();
+        }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver CaptureScreenshot: {ex.Message}"); return null; }
+    }
+
+    public bool ClickAt(int x, int y)
+    {
+        if (_sessionId == null) return false;
+        try
+        {
+            var actions = new[]
+            {
+                new
+                {
+                    type = "pointer",
+                    id = "mouse",
+                    parameters = new { pointerType = "mouse" },
+                    actions = new object[]
+                    {
+                        new { type = "pointerMove", x, y, origin = "viewport" },
+                        new { type = "pointerDown", button = 0 },
+                        new { type = "pointerUp", button = 0 }
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(actions, JsonOpts);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = _client.PostAsync($"{BaseUrl}/wd/hub/session/{_sessionId}/actions", content).GetAwaiter().GetResult();
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver ClickAt: {ex.Message}"); return false; }
+    }
+
     public string? FindElement(string usingMethod, string value)
     {
         if (_sessionId == null) return null;

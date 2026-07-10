@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 
@@ -42,7 +42,7 @@ public class CvCaptureCommand : ICommand
         var name = args[0];
         if (string.IsNullOrWhiteSpace(name))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidName", "name is empty", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidName", "name is empty", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -68,7 +68,7 @@ public class CvCaptureCommand : ICommand
                 else
                 {
                     Console.Write(OutputFormatter.FormatError("InvalidRegion", args[i],
-                        ["Format: --region x,y,w,h"], Program.IsPretty));
+                        ["Format: --region x,y,w,h"], Program.GlobalOptions));
                     return 1;
                 }
             }
@@ -81,7 +81,7 @@ public class CvCaptureCommand : ICommand
         if (region.HasValue && elementName != null)
         {
             Console.Write(OutputFormatter.FormatError("ConflictingArgs", "--region and --element are mutually exclusive",
-                ["Use either --region x,y,w,h or --element \"Name\", not both"], Program.IsPretty));
+                ["Use either --region x,y,w,h or --element \"Name\", not both"], Program.GlobalOptions));
             return 1;
         }
 
@@ -96,7 +96,7 @@ public class CvCaptureCommand : ICommand
             if (found == null)
             {
                 Console.Write(OutputFormatter.FormatError("ElementNotFound", elementName,
-                    ["Check the element name, use 'find' to list available elements"], Program.IsPretty));
+                    ["Check the element name, use 'find' to list available elements"], Program.GlobalOptions));
                 return 1;
             }
 
@@ -108,7 +108,7 @@ public class CvCaptureCommand : ICommand
             catch (Exception ex)
             {
                 Console.Write(OutputFormatter.FormatError("ElementRectFailed", elementName,
-                    [$"Failed to get bounding rect: {ex.Message}"], Program.IsPretty));
+                    [$"Failed to get bounding rect: {ex.Message}"], Program.GlobalOptions));
                 return 1;
             }
         }
@@ -116,7 +116,7 @@ public class CvCaptureCommand : ICommand
         if (!region.HasValue)
         {
             Console.Write(OutputFormatter.FormatError("MissingRegion", "no --region or --element specified",
-                ["Provide --region x,y,w,h or --element \"ButtonName\""], Program.IsPretty));
+                ["Provide --region x,y,w,h or --element \"ButtonName\""], Program.GlobalOptions));
             return 1;
         }
 
@@ -126,7 +126,7 @@ public class CvCaptureCommand : ICommand
         if (dir == null)
         {
             Console.Write(OutputFormatter.FormatError("NoTemplateDir", "",
-                ["Cannot create template directory. Check permissions."], Program.IsPretty));
+                ["Cannot create template directory. Check permissions."], Program.GlobalOptions));
             return 1;
         }
 
@@ -135,7 +135,7 @@ public class CvCaptureCommand : ICommand
         using var bitmap = ScreenshotHelper.CaptureBitmap(rx2, ry2, rw2, rh2);
         if (bitmap == null)
         {
-            Console.Write(OutputFormatter.FormatError("CaptureFailed", $"region {rx2},{ry2},{rw2},{rh2}", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("CaptureFailed", $"region {rx2},{ry2},{rw2},{rh2}", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -193,7 +193,7 @@ public class CvCaptureCommand : ICommand
                 sizeKb = new FileInfo(pngPath).Length / 1024,
                 durationMs = sw.ElapsedMilliseconds,
             },
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }

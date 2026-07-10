@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
@@ -26,12 +26,12 @@ public class ClipboardGetCommand : ICommand
                     text = text ?? "",
                     truncated = text?.Length > 1000
                 }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("ClipboardError", "read", [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ClipboardError", "read", [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }
@@ -59,12 +59,12 @@ public class ClipboardSetCommand : ICommand
             {
                 Command = "clipboard-set", Success = true,
                 Data = new { length = text.Length, preview = text.Length > 50 ? text[..50] + "..." : text }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("ClipboardError", "write", [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ClipboardError", "write", [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

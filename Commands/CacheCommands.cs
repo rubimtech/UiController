@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -27,14 +27,14 @@ public class CacheFindCommand : ICommand
                 Command = "cached-find",
                 Success = true,
                 Data = new { source = "cache", name }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
 
         var found = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (found == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -44,7 +44,7 @@ public class CacheFindCommand : ICommand
             Command = "cached-find",
             Success = true,
             Data = new { source = "fresh", name }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -64,7 +64,7 @@ public class CacheClearCommand : ICommand
             Command = "cache-clear",
             Success = true,
             Data = new { cleared = before }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -82,7 +82,7 @@ public class CacheStatsCommand : ICommand
             Command = "cache-stats",
             Success = true,
             Data = new { cachedElements = ElementCache.Count }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

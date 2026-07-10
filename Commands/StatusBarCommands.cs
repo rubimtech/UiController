@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
 using static RevitUiController.AutomationHelper;
@@ -19,7 +19,7 @@ public class StatusBarCommand : ICommand
             Command = "statusbar",
             Success = true,
             Data = new { text }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 
@@ -115,7 +115,7 @@ public class WaitProgressCommand : ICommand
                 Success = completed,
                 Error = completed ? null : $"Progress did not complete within {timeout / 1000}s",
                 Data = completed ? new { action = "completed" } : null
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return completed ? 0 : 1;
         }
 
@@ -136,7 +136,7 @@ public class WaitProgressCommand : ICommand
                             Command = "wait-progress",
                             Success = true,
                             Data = new { action = "completed", waitedMs = timeout - (int)(deadline - DateTime.UtcNow).TotalMilliseconds }
-                        }, Program.IsPretty));
+                        }, Program.GlobalOptions));
                         return 0;
                     }
                     await Task.Delay(500, ct);
@@ -155,7 +155,7 @@ public class WaitProgressCommand : ICommand
                             Command = "wait-progress",
                             Success = true,
                             Data = new { action = "completed", finalValue = value }
-                        }, Program.IsPretty));
+                        }, Program.GlobalOptions));
                         return 0;
                     }
                 }
@@ -170,7 +170,7 @@ public class WaitProgressCommand : ICommand
             Command = "wait-progress",
             Success = false,
             Error = $"Progress did not complete within {timeout / 1000}s"
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 1;
     }
 

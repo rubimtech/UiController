@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -16,7 +16,7 @@ public class LlmFindCommand : ICommand
 
         if (args.Length == 0 || args[0].StartsWith("--"))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -79,7 +79,7 @@ public class LlmFindCommand : ICommand
                 Command = "llm-find",
                 Success = false,
                 Error = "Failed to capture screenshot"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -104,7 +104,7 @@ public class LlmFindCommand : ICommand
                 },
                 Screenshot = Program.IsScreenshot ? base64 : null,
                 DurationMs = elapsed
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -128,7 +128,7 @@ public class LlmFindCommand : ICommand
                 },
                 Screenshot = Program.IsScreenshot ? base64 : null,
                 DurationMs = elapsed
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -155,7 +155,7 @@ public class LlmFindCommand : ICommand
             },
             Screenshot = Program.IsScreenshot ? base64 : null,
             DurationMs = elapsed
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -172,7 +172,7 @@ public class LlmClickCommand : ICommand
 
         if (args.Length == 0 || args[0].StartsWith("--"))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", Usage, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -231,7 +231,7 @@ public class LlmClickCommand : ICommand
                 Command = "llm-click",
                 Success = false,
                 Error = "Failed to capture screenshot"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -252,7 +252,7 @@ public class LlmClickCommand : ICommand
                 },
                 Screenshot = Program.IsScreenshot ? base64Before : null,
                 DurationMs = elapsed
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -272,7 +272,7 @@ public class LlmClickCommand : ICommand
                 },
                 Screenshot = Program.IsScreenshot ? base64Before : null,
                 DurationMs = elapsed
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -310,7 +310,7 @@ public class LlmClickCommand : ICommand
             Diff = diff,
             Screenshot = Program.IsScreenshot ? base64After : null,
             DurationMs = (DateTime.UtcNow - start).TotalMilliseconds
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }

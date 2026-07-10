@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -26,12 +26,12 @@ public class KeyComboCommand : ICommand
             {
                 Command = "key-combo", Success = true,
                 Data = new { keys, method = "SendKeys.SendWait" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("KeyComboFailed", keys, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("KeyComboFailed", keys, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

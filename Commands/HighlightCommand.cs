@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using static RevitUiController.AutomationHelper;
 
@@ -24,7 +24,7 @@ public class HighlightCommand : ICommand
         var element = FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -34,7 +34,7 @@ public class HighlightCommand : ICommand
             Command = "highlight",
             Success = true,
             Data = new { target = name, durationMs = duration }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -52,7 +52,7 @@ public class HighlightClearCommand : ICommand
         {
             Command = "highlight-clear",
             Success = true
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

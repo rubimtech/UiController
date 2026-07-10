@@ -427,30 +427,30 @@ GDI BitBlt + `mouse_event` не работают через RDP и в session 0.
 | Auto-UiMap в AutomationHelper | `AutomationHelper.cs`, `UiMap.cs` | 2ч | ❌ |
 | **Total** | | **~17ч** | **❌** |
 
-### Фаза 3: Advanced (5-7 дней) ❌
+### Фаза 3: Advanced ✅
 | Задача | Компонент | Оценка | Статус |
 |--------|-----------|--------|--------|
-| Multi-instance Revit | `RevitInstanceManager.cs` | 6ч | ❌ |
-| Export recordings (xUnit/Gherkin) | `RecorderService.cs` | 4ч | ❌ |
-| State Machine для `.rvs` | `ScriptParser.cs` | 8ч | ❌ |
-| `UiCommandBase` | `ICommand.cs`, 3 команды PoC | 3ч | ❌ |
-| RDP/Headless mode | `MouseControl.cs`, `ScreenshotHelper.cs` | 4ч | ❌ |
-| Video recording | `RecorderService.cs` + FFmpeg | 3ч | ❌ |
-| Reactive Named Pipe | `PipeBridgeClient.cs` | 4ч | ❌ |
-| **Total** | | **~32ч** | **❌** |
+| Multi-instance Revit | `RevitInstanceManager.cs` | 6ч | ✅ |
+| Export recordings (xUnit/Gherkin) | `RecorderService.cs` | 4ч | ✅ |
+| State Machine для `.rvs` | `ScriptParser.cs` | 8ч | ✅ |
+| `UiCommandBase` | `ICommand.cs`, 3 команды PoC | 3ч | ✅ |
+| RDP/Headless mode | `MouseControl.cs`, `ScreenshotHelper.cs` | 4ч | ✅ |
+| Video recording | `RecorderService.cs` + FFmpeg | 3ч | ✅ |
+| Reactive Named Pipe | `PipeBridgeClient.cs` | 4ч | ✅ |
+| **Total** | | **~32ч** | **✅** |
 
-### Фаза 4: Polish (2-3 дня) ❌
+### Фаза 4: Polish ✅
 | Задача | Оценка | Статус |
 |--------|--------|--------|
-| LocaleMap → YAML | 2ч | ❌ |
-| RevitVersionProfile — registry fallback | 1ч | ❌ |
-| Merge FlakyRetry + Retry | 2ч | ❌ |
-| Разделить InteractionCommands.cs | 2ч | ❌ |
-| Разделить HighlightHelper — убрать WinForms | 2ч | ❌ |
-| PipeBridgeClient — PeriodicTimer | 1ч | ❌ |
-| `--help <command>` вывод Usage | 1ч | ❌ |
-| `ProgramOptions` record | 3ч | ❌ |
-| **Total** | **~14ч** |
+| LocaleMap → YAML | 2ч | ✅ |
+| RevitVersionProfile — registry fallback | 1ч | ✅ |
+| Merge FlakyRetry + Retry | 2ч | ✅ |
+| Разделить InteractionCommands.cs | 2ч | ✅ |
+| Разделить HighlightHelper — убрать WinForms | 2ч | ✅ |
+| PipeBridgeClient — PeriodicTimer | 1ч | ✅ |
+| `--help <command>` вывод Usage | 1ч | ✅ |
+| `ProgramOptions` record | 3ч | ✅ |
+| **Total** | **~14ч** | **✅** |
 
 ---
 
@@ -510,14 +510,17 @@ GDI BitBlt + `mouse_event` не работают через RDP и в session 0.
 - [ ] `record-export --xunit` / `--gherkin` работает
 
 ### Фаза 3 (Advanced)
-- [ ] `revit-instances` управляет несколькими Revit
-- [ ] `.rvs` поддерживает if-dialog / on-error / wait-any
-- [ ] `--uia-only` работает через RDP
-- [ ] Видеозапись тестов прикрепляется к Allure
+- [x] `revit-instances` управляет несколькими Revit (список, launch, session-switch, multi-exec)
+- [x] `.rvs` поддерживает if-dialog / on-error / wait-any (5 директив)
+- [x] `--uia-only` работает через RDP (WinAppDriver/InvokePattern fallback)
+- [x] Видеозапись тестов прикрепляется к Allure (FFmpeg + Allure attachment)
 
 ### Фаза 4 (Polish)
-- [ ] LocaleMap читается из YAML
-- [ ] `RevitVersionProfile.Detect()` через Registry
-- [ ] `InteractionCommands.cs` разделён на 4-5 файлов
-- [ ] `--help <command>` показывает Usage
-- [ ] `ProgramOptions` record вместо статиков
+- [x] LocaleMap читается из YAML
+- [x] `RevitVersionProfile.Detect()` через Registry + FileVersionInfo fallback
+- [x] `InteractionCommands.cs` разделён на 6 файлов
+- [x] `--help <command>` показывает Usage
+- [x] `ProgramOptions` record вместо статиков
+- [x] FlakyRetry + Retry объединены в RetryPolicy
+- [x] HighlightHelper — WinForms Timer заменён на System.Threading.Timer
+- [x] PipeBridgeClient — PeriodicTimer

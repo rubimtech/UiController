@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 namespace RevitUiController.Commands;
@@ -38,7 +38,7 @@ public class WaitForCommand : ICommand
                 Command = "wait-for",
                 Success = false,
                 Error = $"Dialog '{title}' did not appear within {timeout / 1000}s"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
         
@@ -47,7 +47,7 @@ public class WaitForCommand : ICommand
             Command = "wait-for",
             Success = true,
             Data = new { title = dialog.Name ?? title }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -86,7 +86,7 @@ public class WaitCloseCommand : ICommand
             Success = closed,
             Error = closed ? null : $"Dialog '{title}' did not close within {timeout / 1000}s",
             Data = new { title }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return closed ? 0 : 1;
     }
 }
@@ -127,7 +127,7 @@ public class WaitForElementCommand : ICommand
                 Command = "wait-element",
                 Success = false,
                 Error = $"Element '{name}' did not appear within {timeout / 1000}s"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
         
@@ -136,7 +136,7 @@ public class WaitForElementCommand : ICommand
             Command = "wait-element",
             Success = true,
             Data = OutputFormatter.FromAutomationElement(element, 0, 1)
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }

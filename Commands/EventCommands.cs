@@ -1,4 +1,4 @@
-using RevitUiController.Models;
+﻿using RevitUiController.Models;
 using System.Threading;
 
 namespace RevitUiController.Commands;
@@ -25,7 +25,7 @@ public class ListenStartCommand : ICommand
                 Command = "listen-start",
                 Success = true,
                 Data = new { status = "already_listening" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
 
@@ -39,7 +39,7 @@ public class ListenStartCommand : ICommand
             Command = "listen-start",
             Success = true,
             Data = new { status = "started", events = new[] { "FocusChanged", "StructureChanged", "WindowOpened", "WindowClosed" } }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -59,7 +59,7 @@ public class ListenStopCommand : ICommand
                 Command = "listen-stop",
                 Success = true,
                 Data = new { status = "not_listening" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
 
@@ -70,7 +70,7 @@ public class ListenStopCommand : ICommand
             Command = "listen-stop",
             Success = true,
             Data = new { status = "stopped" }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -97,7 +97,7 @@ public class EventLogCommand : ICommand
                 Command = "event-log",
                 Success = true,
                 Data = new { status = "not_listening", events = Array.Empty<object>() }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
 
@@ -117,7 +117,7 @@ public class EventLogCommand : ICommand
             Command = "event-log",
             Success = true,
             Data = new { total = events.Count, events }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

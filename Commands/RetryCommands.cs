@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -10,12 +10,12 @@ public class RetryClickCommand : ICommand
     public string Description => "Find and click with exponential backoff retry: retry-click <name> [--attempts N] [--delay Ms]";
     public string Usage => "retry-click <name> [--attempts N] [--delay Ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: retry-click <name> [--attempts N] [--delay Ms]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var name = string.Join(" ", args.Where(a => !a.StartsWith("--")));
@@ -29,7 +29,9 @@ public class RetryClickCommand : ICommand
         }
 
         var before = OutputFormatter.CaptureState(revitWindow);
-        var found = FlakyRetry.RetryFind(revitWindow, name, attempts, delay);
+        var found = await RetryPolicy.RetryAsync(
+            () => Task.FromResult(AutomationHelper.FindFirstEnabledVisible(revitWindow, name)),
+            attempts, delay, RetryPolicy.BackoffMode.Fixed, ct: ct);
 
         if (found == null)
         {
@@ -40,11 +42,13 @@ public class RetryClickCommand : ICommand
                 Success = false,
                 Error = $"Element '{name}' not found after {attempts} retries",
                 Diff = OutputFormatter.ComputeDiff(before, after)
-            }, Program.IsPretty));
-            return Task.FromResult(1);
+            }, Program.GlobalOptions));
+            return 1;
         }
 
-        var clicked = FlakyRetry.RetryAction(() => found.Click(), attempts, delay);
+        var clicked = await RetryPolicy.RetryActionAsync(
+            () => { found.Click(); return Task.CompletedTask; },
+            attempts, delay, RetryPolicy.BackoffMode.Fixed, ct);
         var after2 = OutputFormatter.CaptureState(revitWindow);
 
         Console.Write(OutputFormatter.FormatResult(new CommandResult
@@ -53,8 +57,8 @@ public class RetryClickCommand : ICommand
             Success = clicked,
             Error = clicked ? null : $"Failed to click '{name}' after {attempts} retries",
             Diff = OutputFormatter.ComputeDiff(before, after2)
-        }, Program.IsPretty));
-        return Task.FromResult(clicked ? 0 : 1);
+        }, Program.GlobalOptions));
+        return clicked ? 0 : 1;
     }
 }
 
@@ -64,12 +68,12 @@ public class RetryDialogCommand : ICommand
     public string Description => "Wait for dialog with retry: retry-dialog <title> [--attempts N] [--delay Ms]";
     public string Usage => "retry-dialog <title> [--attempts N] [--delay Ms]";
 
-    public Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
+    public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0)
         {
             Console.Error.WriteLine("Usage: retry-dialog <title> [--attempts N] [--delay Ms]");
-            return Task.FromResult(1);
+            return 1;
         }
 
         var title = args[0];
@@ -82,14 +86,16 @@ public class RetryDialogCommand : ICommand
             if (args[i] == "--delay" && i + 1 < args.Length) delay = int.Parse(args[++i]);
         }
 
-        var dialog = FlakyRetry.RetryDialog(revitWindow, title, attempts, delay);
+        var dialog = await RetryPolicy.RetryAsync(
+            () => Task.Run(() => Retry.WaitForDialog(revitWindow, title, attempts * delay, delay)),
+            attempts, delay, RetryPolicy.BackoffMode.Fixed, ct: ct);
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
             Command = "retry-dialog",
             Success = dialog != null,
             Error = dialog == null ? $"Dialog '{title}' not found after {attempts} retries" : null,
             Data = new { title, found = dialog != null, name = dialog?.Name }
-        }, Program.IsPretty));
-        return Task.FromResult(dialog != null ? 0 : 1);
+        }, Program.GlobalOptions));
+        return dialog != null ? 0 : 1;
     }
 }

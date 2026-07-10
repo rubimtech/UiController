@@ -31,7 +31,7 @@ public class ListItemsCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -102,7 +102,7 @@ public class ListItemsCommand : ICommand
                 items
             }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 

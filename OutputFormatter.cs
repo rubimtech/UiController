@@ -30,8 +30,14 @@ public static class OutputFormatter
         return json;
     }
 
-    public static string FormatError(string code, string query, List<string>? suggestions = null, bool pretty = false)
+    public static string FormatResult(CommandResult result, ProgramOptions? options)
     {
+        return FormatResult(result, options?.IsPretty ?? Program.IsPretty);
+    }
+
+    public static string FormatError(string code, string query, List<string>? suggestions = null, ProgramOptions? options = null)
+    {
+        var pretty = options?.IsPretty ?? Program.IsPretty;
         var result = new CommandResult
         {
             Success = false,
@@ -43,7 +49,7 @@ public static class OutputFormatter
             },
             Error = $"{code}: element '{query}' not found"
         };
-        return FormatResult(result, pretty);
+        return FormatResult(result, options);
     }
 
     public static ElementInfo FromAutomationElement(AutomationElement el, int depth = 2, int maxDepth = 2)

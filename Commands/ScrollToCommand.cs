@@ -33,7 +33,7 @@ public class ScrollToCommand : ICommand
             scope = AutomationHelper.FindFirstEnabledVisible(revitWindow, parentFilter);
             if (scope == null)
             {
-                Console.Write(OutputFormatter.FormatError("NotFound", parentFilter, ["parent"], Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("NotFound", parentFilter, ["parent"], Program.GlobalOptions));
                 return 1;
             }
         }
@@ -41,7 +41,7 @@ public class ScrollToCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(scope, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -95,7 +95,7 @@ public class ScrollToCommand : ICommand
                 } : null
             }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return success ? 0 : 1;
     }
 }

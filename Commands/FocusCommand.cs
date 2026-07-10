@@ -15,7 +15,7 @@ public class FocusCommand : ICommand
         var mgr = Program.WindowManager;
         if (mgr == null)
         {
-            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoWindowManager", "", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -58,7 +58,7 @@ public class FocusCommand : ICommand
 
         if (target == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", titleFilter ?? $"pid={targetPid}", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", titleFilter ?? $"pid={targetPid}", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -78,7 +78,7 @@ public class FocusCommand : ICommand
                 monitor = target.MonitorName
             }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return Task.FromResult(success ? 0 : 1);
     }
 }

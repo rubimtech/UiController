@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
 using static RevitUiController.AutomationHelper;
@@ -31,7 +31,7 @@ public class TaskDialogCommand : ICommand
                 Command = "taskdialog",
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -45,7 +45,7 @@ public class TaskDialogCommand : ICommand
                 Command = "taskdialog",
                 Success = true,
                 Data = info
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -59,7 +59,7 @@ public class TaskDialogCommand : ICommand
                 Command = "taskdialog",
                 Success = true,
                 Data = info
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -77,7 +77,7 @@ public class TaskDialogCommand : ICommand
                     Command = "taskdialog",
                     Success = false,
                     Error = $"Button '{buttonName}' not found in task dialog"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
 
@@ -87,7 +87,7 @@ public class TaskDialogCommand : ICommand
                 Command = "taskdialog",
                 Success = true,
                 Data = new { action = "click", button = buttonName }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 

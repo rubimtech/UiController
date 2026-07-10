@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -24,7 +24,7 @@ public class SetValueCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -33,7 +33,7 @@ public class SetValueCommand : ICommand
             var value = element.Patterns.Value.Pattern;
             if (value == null)
             {
-                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["ValuePattern not available, try type"], Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["ValuePattern not available, try type"], Program.GlobalOptions));
                 return Task.FromResult(1);
             }
             value.SetValue(text);
@@ -41,12 +41,12 @@ public class SetValueCommand : ICommand
             {
                 Command = "set-value", Success = true,
                 Data = new { target = name, value = text, method = "ValuePattern.SetValue" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("SetValueFailed", name, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("SetValueFailed", name, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using static RevitUiController.AutomationHelper;
 
@@ -26,7 +26,7 @@ public class MouseClickCommand : ICommand
                 Command = "mouse-click",
                 Success = true,
                 Data = new { x, y }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -35,7 +35,7 @@ public class MouseClickCommand : ICommand
         var element = FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -47,7 +47,7 @@ public class MouseClickCommand : ICommand
             Success = true,
             Data = new { name, @using = "coordinate_click" },
             Diff = OutputFormatter.ComputeDiff(before, after)
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -76,7 +76,7 @@ public class MouseDragCommand : ICommand
             Command = "mouse-drag",
             Success = true,
             Data = new { from = new { x = x1, y = y1 }, to = new { x = x2, y = y2 } }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -101,7 +101,7 @@ public class MouseScrollCommand : ICommand
             Command = "mouse-scroll",
             Success = true,
             Data = new { ticks }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -120,7 +120,7 @@ public class MousePosCommand : ICommand
             Command = "mouse-pos",
             Success = true,
             Data = new { x = pos.x, y = pos.y }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }
@@ -146,7 +146,7 @@ public class MouseTypeCommand : ICommand
             Command = "mouse-type",
             Success = true,
             Data = new { text }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return 0;
     }
 }

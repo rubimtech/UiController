@@ -11,11 +11,13 @@ public class WaitCommand : ICommand
     public string Description => "Wait N seconds";
     public string Usage => "wait <seconds>";
 
+    public ProgramOptions Options { get; set; } = new();
+
     public async Task<int> ExecuteAsync(AutomationElement revitWindow, string[] args, CancellationToken ct = default)
     {
         if (args.Length == 0 || !int.TryParse(args[0], out var sec))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "wait <seconds>", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "wait <seconds>", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -27,7 +29,7 @@ public class WaitCommand : ICommand
             Success = true,
             Data = new { seconds = sec }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 }
@@ -39,6 +41,8 @@ public class ScriptCommand : ICommand
     public string Name => "script";
     public string Description => "Run commands from a script file (in-process)";
     public string Usage => "script <file-path> [--auto-heal] [--auto-heal-max-retry N]";
+
+    public ProgramOptions Options { get; set; } = new();
 
     public ScriptCommand(Dictionary<string, ICommand> commands)
     {
@@ -63,14 +67,14 @@ public class ScriptCommand : ICommand
 
         if (fileArgs.Count == 0)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "script <file-path> [--auto-heal] [--auto-heal-max-retry N]", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "script <file-path> [--auto-heal] [--auto-heal-max-retry N]", null, Program.GlobalOptions));
             return 1;
         }
 
         var filePath = string.Join(" ", fileArgs);
         if (!File.Exists(filePath))
         {
-            Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.GlobalOptions));
             return 1;
         }
 
@@ -281,7 +285,7 @@ public class ScriptCommand : ICommand
             Success = failed == 0,
             Data = new { file = filePath, totalLines = lines.Length, executed, failed }
         };
-        Console.Write(OutputFormatter.FormatResult(result, Program.IsPretty));
+        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
         return 0;
     }
 

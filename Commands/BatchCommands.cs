@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
@@ -41,7 +41,7 @@ public class PropertySheetBatchCommand : ICommand
                 Command = "ps-batch",
                 Success = false,
                 Error = $"Dialog '{dialogTitle}' not found"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -56,7 +56,7 @@ public class PropertySheetBatchCommand : ICommand
                     Command = "ps-batch",
                     Success = false,
                     Error = "JSON payload is empty or invalid"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
             fields = parsed;
@@ -68,7 +68,7 @@ public class PropertySheetBatchCommand : ICommand
                 Command = "ps-batch",
                 Success = false,
                 Error = $"Failed to parse JSON payload: {ex.Message}"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -82,7 +82,7 @@ public class PropertySheetBatchCommand : ICommand
                     Command = "ps-batch",
                     Success = false,
                     Error = $"Tab '{targetTab}' not found in dialog"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return 1;
             }
         }
@@ -163,7 +163,7 @@ public class PropertySheetBatchCommand : ICommand
                 failures,
                 fields = filledFields
             }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
 
         return failures.Count == 0 ? 0 : 1;
     }

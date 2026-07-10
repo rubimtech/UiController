@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -22,7 +22,7 @@ public class InvokeCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, ["try click instead"], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, ["try click instead"], Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -31,7 +31,7 @@ public class InvokeCommand : ICommand
             var invoke = element.Patterns.Invoke.Pattern;
             if (invoke == null)
             {
-                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["InvokePattern not available, try click"], Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["InvokePattern not available, try click"], Program.GlobalOptions));
                 return Task.FromResult(1);
             }
             invoke.Invoke();
@@ -39,12 +39,12 @@ public class InvokeCommand : ICommand
             {
                 Command = "invoke", Success = true,
                 Data = new { target = name, method = "InvokePattern" }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("InvokeFailed", name, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvokeFailed", name, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

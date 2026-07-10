@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
@@ -50,7 +50,7 @@ public class ProcessListCommand : ICommand
             Command = "process-list",
             Success = true,
             Data = new { count = processes.Count, processes }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
 
         return Task.FromResult(0);
     }
@@ -72,7 +72,7 @@ public class ProcessInfoCommand : ICommand
                 Command = "process-info",
                 Success = false,
                 Error = "No connected Revit session"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -107,7 +107,7 @@ public class ProcessInfoCommand : ICommand
                 sessionId = p.SessionId,
                 targetPid = session.TargetPid
             }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
 
         return Task.FromResult(0);
     }

@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
 using static RevitUiController.AutomationHelper;
@@ -35,7 +35,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Dialog '{title}' is not open",
                 Data = new { assert = "exists", title, actual = dialog?.Name }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -48,7 +48,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Dialog '{title}' is open but should not be",
                 Data = new { assert = "not-exists", title }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -59,7 +59,7 @@ public class AssertDialogCommand : ICommand
                 Command = "assert-dialog",
                 Success = false,
                 Error = $"Dialog '{title}' is not open"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -74,7 +74,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Dialog '{title}' does not contain text '{expected}'",
                 Data = new { assert = "text", expected, actual = Truncate(text, 200) }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -89,7 +89,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Button '{buttonName}' not found in dialog '{title}'",
                 Data = new { assert = "button", name = buttonName, found = ok }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -104,7 +104,7 @@ public class AssertDialogCommand : ICommand
                     Command = "assert-dialog",
                     Success = false,
                     Error = $"Button '{buttonName}' not found in dialog '{title}'"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return Task.FromResult(1);
             }
             var ok = button.IsEnabled;
@@ -114,7 +114,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Button '{buttonName}' is disabled",
                 Data = new { assert = "enabled", name = buttonName, enabled = ok }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -140,7 +140,7 @@ public class AssertDialogCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Field '{fieldLabel}' value '{actualValue}' does not contain '{expectedValue}'",
                 Data = new { assert = "field", label = fieldLabel, expected = expectedValue, actual = actualValue }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -290,7 +290,7 @@ public class AssertRibbonCommand : ICommand
                 Command = "assert-ribbon",
                 Success = false,
                 Error = "Ribbon not found"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -321,7 +321,7 @@ public class AssertRibbonCommand : ICommand
                 Success = tabExists,
                 Error = tabExists ? null : $"Tab '{tabName}' not found in ribbon",
                 Data = new { assert = "tab", name = tabName, exists = tabExists }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(tabExists ? 0 : 1);
         }
 
@@ -334,7 +334,7 @@ public class AssertRibbonCommand : ICommand
                     Command = "assert-ribbon",
                     Success = false,
                     Error = $"Tab '{tabName}' not found"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return Task.FromResult(1);
             }
 
@@ -347,7 +347,7 @@ public class AssertRibbonCommand : ICommand
                 Success = ok,
                 Error = ok ? null : $"Button '{buttonName}' not found on tab '{tabName}'",
                 Data = new { assert = "button", tab = tabName, name = buttonName, exists = ok }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
 
@@ -418,7 +418,7 @@ public class AssertViewCommand : ICommand
                 Command = "assert-view",
                 Success = false,
                 Error = "View tab control not found"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -445,7 +445,7 @@ public class AssertViewCommand : ICommand
             Success = found,
             Error = found ? null : $"View tab matching '{viewName}' not found or not active",
             Data = new { assert = "view", name = viewName, exists = found, allTabs }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(found ? 0 : 1);
     }
 }

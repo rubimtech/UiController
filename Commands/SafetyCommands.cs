@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 namespace RevitUiController.Commands;
@@ -60,7 +60,7 @@ public class SafetyCheckCommand : ICommand
             Success = found.Count == 0,
             Error = found.Count > 0 ? $"Found {found.Count} unexpected dialog(s) after dismiss" : null,
             Data = new { remainingDialogs = found.Count, dismissed = true }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return found.Count == 0 ? 0 : 1;
     }
 }
@@ -98,7 +98,7 @@ public class RevitRestartCommand : ICommand
                 Command = "revit-restart",
                 Success = true,
                 Data = new { action = "none", reason = "already_running", pid = process?.Id }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 0;
         }
 
@@ -112,7 +112,7 @@ public class RevitRestartCommand : ICommand
                 Command = "revit-restart",
                 Success = false,
                 Error = "Failed to start Revit process"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return 1;
         }
 
@@ -124,7 +124,7 @@ public class RevitRestartCommand : ICommand
             Success = ready,
             Error = ready ? null : "Revit started but did not become ready within 120s",
             Data = new { action = "started", pid = started.Id, ready }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return ready ? 0 : 1;
     }
 }

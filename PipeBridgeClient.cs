@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading;
@@ -10,6 +11,11 @@ public class PipeBridgeClient : IDisposable
     private CancellationTokenSource? _heartbeatCts;
     private Task? _heartbeatTask;
     private readonly object _lock = new();
+    private NamedPipeClientStream? _eventPipe;
+
+    public record PipeEvent(string Type, string? Data, DateTime Timestamp);
+    public event Action<PipeEvent>? OnEvent;
+    public ConcurrentQueue<PipeEvent> EventQueue { get; } = new();
 
     public bool IsConnected => _pipe?.IsConnected ?? false;
 
@@ -26,6 +32,7 @@ public class PipeBridgeClient : IDisposable
                 loginUser = "uictrl"
             });
             StartHeartbeat();
+            StartEventListener();
             return true;
         }
         catch (Exception ex)
@@ -96,7 +103,78 @@ public class PipeBridgeClient : IDisposable
             catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge data read: {ex.Message}"); return null; }
         }
 
-        return Encoding.UTF8.GetString(dataBuf);
+        var text = Encoding.UTF8.GetString(dataBuf);
+        ProcessIncomingMessage(text);
+        return text;
+    }
+
+    private void ProcessIncomingMessage(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "event")
+            {
+                var eventType = root.TryGetProperty("eventType", out var et) ? et.GetString() ?? "unknown" : "unknown";
+                var data = root.TryGetProperty("data", out var d) ? d.GetRawText() : null;
+                var pipeEvent = new PipeEvent(eventType, data, DateTime.UtcNow);
+                EventQueue.Enqueue(pipeEvent);
+                while (EventQueue.Count > 1000)
+                    EventQueue.TryDequeue(out _);
+                OnEvent?.Invoke(pipeEvent);
+            }
+        }
+        catch { }
+    }
+
+    private void StartEventListener()
+    {
+        try
+        {
+            _eventPipe = new NamedPipeClientStream(".", "ReVibe", PipeDirection.InOut, PipeOptions.Asynchronous);
+            _eventPipe.Connect(2000);
+            var hello = SendCommand("_hello", new { clientType = "ext_events", processId = Environment.ProcessId, loginUser = "uictrl" });
+            SendCommand("_subscribe_events", new { });
+            _ = EventListenerLoopAsync();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Warn("Safe", $"PipeBridge event listener start: {ex.Message}");
+        }
+    }
+
+    private async Task EventListenerLoopAsync()
+    {
+        if (_eventPipe == null) return;
+        var buf = new byte[4];
+        try
+        {
+            while (_eventPipe.IsConnected)
+            {
+                int read = 0;
+                while (read < 4)
+                {
+                    var n = await _eventPipe.ReadAsync(buf, read, 4 - read);
+                    if (n == 0) return;
+                    read += n;
+                }
+                var len = BitConverter.ToInt32(buf, 0);
+                if (len <= 0 || len > 4 * 1024 * 1024) continue;
+                var dataBuf = new byte[len];
+                read = 0;
+                while (read < len)
+                {
+                    var n = await _eventPipe.ReadAsync(dataBuf, read, len - read);
+                    if (n == 0) return;
+                    read += n;
+                }
+                var json = Encoding.UTF8.GetString(dataBuf);
+                ProcessIncomingMessage(json);
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"PipeBridge event loop: {ex.Message}"); }
     }
 
     private void StartHeartbeat()
@@ -127,7 +205,11 @@ public class PipeBridgeClient : IDisposable
         {
             _pipe?.Dispose();
             _pipe = null;
+            _eventPipe?.Dispose();
+            _eventPipe = null;
         }
+        while (EventQueue.Count > 1000)
+            EventQueue.TryDequeue(out _);
     }
 
     public void Dispose()

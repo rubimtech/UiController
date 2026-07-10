@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
@@ -31,12 +31,12 @@ public class AllureSetupCommand : ICommand
                 Command = "allure-setup",
                 Success = true,
                 Data = new { outputDir, absolutePath = Path.GetFullPath(outputDir) }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("AllureSetupError", outputDir, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("AllureSetupError", outputDir, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }
@@ -79,7 +79,7 @@ public class AllureReportCommand : ICommand
                     Command = "allure-report",
                     Success = false,
                     Error = "Allure CLI not found. Install: scoop install allure"
-                }, Program.IsPretty));
+                }, Program.GlobalOptions));
                 return Task.FromResult(1);
             }
 
@@ -94,12 +94,12 @@ public class AllureReportCommand : ICommand
                 Success = ok,
                 Error = ok ? null : error,
                 Data = new { resultsDir, reportDir, exitCode = process.ExitCode }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(ok ? 0 : 1);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("AllureReportError", reportDir, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("AllureReportError", reportDir, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

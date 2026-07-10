@@ -1,4 +1,4 @@
-using RevitUiController.Models;
+﻿using RevitUiController.Models;
 using System.Threading;
 using System.Threading;
 
@@ -52,7 +52,7 @@ public class LogsCommand : ICommand
             Command = "logs",
             Success = true,
             Data = new { source = plugin ? "plugin" : "controller", total = lines.Length, lines }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -67,14 +67,14 @@ public class DryRunCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "dry-run <script-path>", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("InvalidArgs", "dry-run <script-path>", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
         var filePath = string.Join(" ", args);
         if (!File.Exists(filePath))
         {
-            Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("FileNotFound", filePath, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -102,7 +102,7 @@ public class DryRunCommand : ICommand
             Command = "dry-run",
             Success = true,
             Data = new { file = filePath, totalSteps = steps.Count, steps }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 

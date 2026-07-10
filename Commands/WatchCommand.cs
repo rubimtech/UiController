@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -61,7 +61,7 @@ public class WatchCommand : ICommand
                     {
                         Command = "watch", Success = true,
                         Data = new { command = cmdName, condition, matched = true, deadlineStr }
-                    }, Program.IsPretty));
+                    }, Program.GlobalOptions));
                     return 0;
                 }
             }
@@ -70,7 +70,7 @@ public class WatchCommand : ICommand
             await Task.Delay(interval * 1000);
         }
 
-        Console.Write(OutputFormatter.FormatError("Timeout", $"watch {cmdName}", [$"condition '{condition}' not met within {timeout}s"], Program.IsPretty));
+        Console.Write(OutputFormatter.FormatError("Timeout", $"watch {cmdName}", [$"condition '{condition}' not met within {timeout}s"], Program.GlobalOptions));
         return 1;
     }
 

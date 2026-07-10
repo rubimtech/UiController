@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using RevitUiController.Models;
 using System.Threading;
@@ -37,7 +37,7 @@ public class ToggleCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -46,7 +46,7 @@ public class ToggleCommand : ICommand
             var toggle = element.Patterns.Toggle.Pattern;
             if (toggle == null)
             {
-                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["TogglePattern not available"], Program.IsPretty));
+                Console.Write(OutputFormatter.FormatError("PatternNotSupported", name, ["TogglePattern not available"], Program.GlobalOptions));
                 return Task.FromResult(1);
             }
 
@@ -67,12 +67,12 @@ public class ToggleCommand : ICommand
             {
                 Command = "toggle", Success = true,
                 Data = new { target = name, before = before.ToString(), after = after.ToString(), toggled = before != after }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("ToggleFailed", name, [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ToggleFailed", name, [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

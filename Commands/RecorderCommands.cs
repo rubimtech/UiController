@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -28,7 +28,7 @@ public class RecordStartCommand : ICommand
             Command = "record-start",
             Success = true,
             Data = new { outputPath = path }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -48,7 +48,7 @@ public class RecordStopCommand : ICommand
                 Command = "record-stop",
                 Success = false,
                 Error = "No recording in progress"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -59,7 +59,7 @@ public class RecordStopCommand : ICommand
             Success = path != null,
             Error = path == null ? "Failed to save recording" : null,
             Data = new { savedTo = path, actions = RecorderService.RecordedCount }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(path != null ? 0 : 1);
     }
 }
@@ -77,7 +77,7 @@ public class RecordStatusCommand : ICommand
             Command = "record-status",
             Success = true,
             Data = new { isRecording = RecorderService.IsRecording, actionsRecorded = RecorderService.RecordedCount }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }
@@ -97,7 +97,7 @@ public class RecordSaveCommand : ICommand
                 Command = "record-save",
                 Success = false,
                 Error = "No recording in progress"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -123,7 +123,7 @@ public class RecordSaveCommand : ICommand
                 Command = "record-save",
                 Success = false,
                 Error = "Failed to save recording"
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -144,7 +144,7 @@ public class RecordSaveCommand : ICommand
                 actions = RecorderService.RecordedCount,
                 diff = diffData
             }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 

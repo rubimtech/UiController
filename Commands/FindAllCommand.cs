@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -35,7 +35,7 @@ public class FindAllCommand : ICommand
 
         if (results.Count == 0)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -46,7 +46,7 @@ public class FindAllCommand : ICommand
             Data = Program.Verbosity == "minimal"
                 ? new { query = name, count = results.Count }
                 : new { query = name, count = results.Count, results = elements }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(0);
     }
 }

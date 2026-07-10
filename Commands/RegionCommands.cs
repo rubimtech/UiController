@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -32,7 +32,7 @@ public class ScreenshotRegionCommand : ICommand
             Error = b64 == null ? "Screenshot failed" : null,
             Screenshot = b64,
             Data = new { region = new { x, y, w, h } }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(b64 != null ? 0 : 1);
     }
 }
@@ -69,12 +69,12 @@ public class HighlightRegionCommand : ICommand
             {
                 Command = "highlight-region", Success = true,
                 Data = new { region = new { x, y, w, h }, durationMs = ms }
-            }, Program.IsPretty));
+            }, Program.GlobalOptions));
             return Task.FromResult(0);
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("HighlightFailed", $"{x},{y},{w},{h}", [ex.Message], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("HighlightFailed", $"{x},{y},{w},{h}", [ex.Message], Program.GlobalOptions));
             return Task.FromResult(1);
         }
     }

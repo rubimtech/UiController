@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
 using System.Threading;
 
@@ -15,7 +15,7 @@ public class WadConnectCommand : ICommand
         var hWnd = revitWindow.Properties.NativeWindowHandle;
         if (hWnd == null || hWnd == IntPtr.Zero)
         {
-            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -27,7 +27,7 @@ public class WadConnectCommand : ICommand
             Success = ok,
             Error = ok ? null : "Failed to connect to WinAppDriver. Is it running on port 4723?",
             Data = new { hWnd = ((IntPtr)hWnd).ToInt64() }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(ok ? 0 : 1);
     }
 }
@@ -49,14 +49,14 @@ public class WadFindCommand : ICommand
         var hWnd = revitWindow.Properties.NativeWindowHandle;
         if (hWnd == null || hWnd == IntPtr.Zero)
         {
-            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
         using var client = new WinAppDriverClient();
         if (!client.Connect(hWnd))
         {
-            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", ["Is WinAppDriver running on port 4723?"], Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", ["Is WinAppDriver running on port 4723?"], Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -79,7 +79,7 @@ public class WadFindCommand : ICommand
             Success = elementId != null,
             Error = elementId == null ? $"Element '{value}' not found via WinAppDriver" : null,
             Data = new { method = usingMethod, query = value, elementId }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(elementId != null ? 0 : 1);
     }
 }
@@ -102,21 +102,21 @@ public class WadClickCommand : ICommand
         var hWnd = revitWindow.Properties.NativeWindowHandle;
         if (hWnd == null || hWnd == IntPtr.Zero)
         {
-            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NoHandle", "revitWindow", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
         using var client = new WinAppDriverClient();
         if (!client.Connect(hWnd))
         {
-            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
         var elementId = client.FindElement("name", name);
         if (elementId == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.IsPretty));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
             return Task.FromResult(1);
         }
 
@@ -127,7 +127,7 @@ public class WadClickCommand : ICommand
             Success = clicked,
             Error = clicked ? null : $"Failed to click '{name}' via WinAppDriver",
             Data = new { target = name }
-        }, Program.IsPretty));
+        }, Program.GlobalOptions));
         return Task.FromResult(clicked ? 0 : 1);
     }
 }
