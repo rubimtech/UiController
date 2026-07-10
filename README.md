@@ -371,37 +371,37 @@ session-end
 
 ```mermaid
 flowchart TB
-    CLI["CLI / dotnet run"] --> GlobalFlags["ParseGlobalFlags\n--pid, --pretty, --screenshot ..."]
-    GlobalFlags --> CommandDispatch["Command Dispatch\n(Dictionary<string, ICommand>)"]
-    CommandDispatch --> RevitSession["RevitSession.Connect()\nFlaUI UIA3 attach"]
+    CLI["CLI / dotnet run"] --> GlobalFlags["Parse flags: --pid, --pretty, --screenshot"]
+    GlobalFlags --> CommandDispatch["Command Dispatch (ICommand lookup)"]
+    CommandDispatch --> RevitSession["RevitSession.Connect() - FlaUI UIA3"]
     RevitSession --> ExecuteCmd["cmd.ExecuteAsync(revitWindow, args)"]
 
     subgraph ExecutionPipeline["Execution Pipeline"]
-        ExecuteCmd --> BeforeState["CaptureState()\n— active dialogs\n— active tab\n— active view"]
-        BeforeState --> UIAction["FlaUI Interaction\nFind → Click / Type / Wait"]
-        UIAction --> AfterState["CaptureState()\nComputeDiff()"]
-        AfterState --> SessionUpdate["SessionContext\nAuto Push/Pop Dialogs"]
-        SessionUpdate --> FormatResult["OutputFormatter\nFormatResult(CommandResult)"]
-        FormatResult --> Recorder["RecorderService\nRecord() if recording"]
-        Recorder --> AutoScreenshot["Auto-screenshot\nif exitCode != 0"]
+        ExecuteCmd --> BeforeState["CaptureState(): active dialogs, tab, view"]
+        BeforeState --> UIAction["FlaUI Interaction: Find, Click, Type, Wait"]
+        UIAction --> AfterState["CaptureState() + ComputeDiff()"]
+        AfterState --> SessionUpdate["SessionContext: auto Push/Pop Dialogs"]
+        SessionUpdate --> FormatResult["OutputFormatter: FormatResult()"]
+        FormatResult --> Recorder["RecorderService: Record() if active"]
+        Recorder --> AutoScreenshot["Auto-screenshot if exitCode != 0"]
     end
 
     ExecuteCmd --> ExecutionPipeline
-    AutoScreenshot --> STDOUT["STDOUT\nJSON CommandResult"]
+    AutoScreenshot --> STDOUT["STDOUT: JSON CommandResult"]
 
     subgraph Fallbacks["Fallback Layers"]
         direction LR
-        F1["FlaUI UIA3"] --> F2["Win32\nSendMessage"]
+        F1["FlaUI UIA3"] --> F2["Win32 SendMessage"]
         F2 --> F3["WinAppDriver"]
     end
     ExecutionPipeline -.-> Fallbacks
 
     subgraph Extensions["Extension Modules"]
-        UIMap["UiMap\nPage Object Model\n(YAML)"]
-        Session["SessionContext\nStateful session"]
-        CV["CvMatchClient\nOpenCV Template"]
-        LLM["LlmVisionClient\nLLM Vision API"]
-        Pipe["PipeBridgeClient\nRevit API Named Pipe"]
+        UIMap["UiMap: YAML Page Object Model"]
+        Session["SessionContext: Stateful session"]
+        CV["CvMatchClient: OpenCV Template"]
+        LLM["LlmVisionClient: LLM Vision API"]
+        Pipe["PipeBridgeClient: Revit API"]
     end
     ExecutionPipeline -.-> Extensions
 ```
@@ -410,31 +410,31 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-    participant CLI as CLI User / Agent
+    participant CLI as CLI Agent
     participant Program as Program.cs
     participant Session as RevitSession
     participant Cmd as ICommand
     participant FlaUI as FlaUI UIA3
     participant Output as OutputFormatter
 
-    CLI->>Program: dotnet run -- ribbon Wall Architecture
+    CLI->>Program: run -- ribbon Wall Architecture
     Program->>Program: ParseGlobalFlags()
     Program->>Session: Connect(pid?, processName?)
-    Session-->>Program: AutomationElement revitWindow
-    Program->>Program: CaptureState() ← beforeState
-    Program->>Cmd: ExecuteAsync(revitWindow, ["Wall", "Architecture"])
+    Session-->>Program: revitWindow (AutomationElement)
+    Program->>Program: CaptureState() - before state
+    Program->>Cmd: ExecuteAsync(window, ["Wall","Architecture"])
     Cmd->>FlaUI: FindFirstEnabledVisible("Architecture")
-    FlaUI-->>Cmd: tabElement
-    Cmd->>FlaUI: TryClick(tabElement)
+    FlaUI-->>Cmd: tab element
+    Cmd->>FlaUI: TryClick(tab)
     Cmd->>FlaUI: FindFirstEnabledVisible("Wall")
-    FlaUI-->>Cmd: buttonElement
-    Cmd->>FlaUI: TryClick(buttonElement)
+    FlaUI-->>Cmd: button element
+    Cmd->>FlaUI: TryClick(button)
     Cmd-->>Program: exitCode = 0
-    Program->>Program: CaptureState() ← afterState
+    Program->>Program: CaptureState() - after state
     Program->>Program: ComputeDiff(before, after)
-    Program->>SessionContext: PushDialog(newDialogs)
-    Program->>Output: FormatResult({ command, success, diff, data, durationMs })
-    Output-->>CLI: JSON
+    Program->>SessionContext: PushDialog(new dialogs)
+    Program->>Output: FormatResult({command, success, diff, data, durationMs})
+    Output-->>CLI: JSON result
     alt exitCode != 0
         Program->>ScreenshotHelper: CaptureWindow()
         ScreenshotHelper-->>CLI: base64 screenshot
@@ -445,26 +445,29 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NoSession: initial
+    [*] --> NoSession: initial state
 
     NoSession --> Active: session-begin
-    Active --> Active: ribbon Architecture\n→ sets ActiveTab
-    Active --> Active: wait-for "Modify | Walls"\n→ PushDialog("Modify | Walls")
-    Active --> Active: auto-scope\n→ type/click без указания диалога\n→ подставляется ActiveDialog
-    Active --> Active: set varName value\n→ Variables["varName"] = value
-    Active --> Active: $varName in args\n→ подстановка значения
-    Active --> Active: диалог закрылся\n→ PopDialog()
+    Active --> Active: ribbon Architecture → sets ActiveTab
+    Active --> Active: wait-for "Modify | Walls" → PushDialog
+    Active --> Active: auto-scope: type/click без диалога → ActiveDialog
+    Active --> Active: set varName value → Variables["varName"]
+    Active --> Active: $varName in args → variable expansion
+    Active --> Active: dialog closed → PopDialog
     Active --> NoSession: session-end
 
-    NoSession --> NoSession: stateless commands
-    (любая команда без session-begin)
+    NoSession --> NoSession: stateless commands (no session-begin)
 
     state Active {
-        [*] --> Tracking
-        Tracking --> DialogStack: dialog opened
-        DialogStack --> Tracking: dialog closed
-        Tracking --> VariableScope: set command
-        VariableScope --> Tracking: variable set
+        [*] --> DialogTracking
+        DialogTracking --> DialogStack: dialog opened
+        DialogStack --> DialogTracking: dialog closed
+        DialogTracking --> VariableScope: set command
+        VariableScope --> DialogTracking: variable stored
+    }
+
+    state NoSession {
+        [*] --> Idle
     }
 ```
 
@@ -493,7 +496,7 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    actor Agent as AI Agent / User
+    actor Agent as AI Agent
     participant App as RevitUiController
     participant SS as ScreenshotHelper
     participant LLM as LlmVisionClient
@@ -501,22 +504,19 @@ sequenceDiagram
     participant Mouse as MouseControl
     participant Revit as Revit UI
 
-    Agent->>App: llm-click "Wall button on\nArchitecture tab"
-    App->>SS: CaptureBase64(revitWindow.X, Y, W, H)
-    SS-->>App: base64 PNG string
-    App->>LLM: FindElementAsync("Wall button...", base64)
-
-    Note over LLM: RouterAI → OpenAI → Anthropic → Ollama
-
-    LLM->>API: POST /chat/completions\n{ model, messages: [\n  { type: "text", text: prompt },\n  { type: "image_url", image_url: base64 }\n]}
+    Agent->>App: llm-click "Wall button"
+    App->>SS: CaptureBase64(window X, Y, W, H)
+    SS-->>App: base64 PNG
+    App->>LLM: FindElementAsync("Wall button", base64)
+    Note over LLM: RouterAI -> OpenAI -> Anthropic -> Ollama
+    LLM->>API: POST chat/completions with image_url
     API-->>LLM: { choices[0].message.content }
-    LLM->>LLM: ExtractJson() — парсинг { found, x, y, name, confidence }
-    LLM-->>App: LlmVisionResult { X: 450, Y: 320 }
-
-    App->>Revit: MouseControl.ClickAt(450, 320)
-    Revit-->>App: click performed
-    App->>App: CaptureState() → ComputeDiff(before, after)
-    App-->>Agent: CommandResult { success, diff,\nprovder: "routerai", model: "qwen/qwen-vl-max" }
+    LLM->>LLM: ExtractJson() -> { found, x, y, name, confidence }
+    LLM-->>App: result X:450 Y:320
+    App->>Mouse: ClickAt(450, 320)
+    Mouse->>Revit: click
+    App->>App: CaptureState + ComputeDiff
+    App-->>Agent: CommandResult { success, diff, provider, model }
 ```
 
 ### OpenCV Template Matching Flow
