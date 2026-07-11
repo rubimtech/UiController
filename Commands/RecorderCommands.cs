@@ -14,7 +14,7 @@ public class RecordStartCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: record-start <output-path>");
+            LoggingService.Error("RecorderCommands", "Usage: record-start <output-path>");
             return Task.FromResult(1);
         }
 

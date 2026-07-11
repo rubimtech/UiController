@@ -141,7 +141,7 @@ public class ScriptCommand : ICommand
                 }
                 else
                 {
-                    Console.Error.WriteLine($"  Dialog '{title}' did not appear within timeout");
+                    LoggingService.Error("ScriptCommands", $"  Dialog '{title}' did not appear within timeout");
                 }
                 continue;
             }
@@ -160,7 +160,7 @@ public class ScriptCommand : ICommand
                 }
                 else
                 {
-                    Console.Error.WriteLine($"  Dialog '{title}' did not close within timeout");
+                    LoggingService.Error("ScriptCommands", $"  Dialog '{title}' did not close within timeout");
                 }
                 continue;
             }
@@ -197,7 +197,7 @@ public class ScriptCommand : ICommand
                 }
                 else
                 {
-                    Console.Error.WriteLine($"  ComboBox '{label}' not found");
+                    LoggingService.Warn("ScriptCommands", $"  ComboBox '{label}' not found");
                 }
                 continue;
             }
@@ -209,7 +209,7 @@ public class ScriptCommand : ICommand
                 {
                     if (!SafetyGuard.ConfirmDestructiveAction(fullDesc))
                     {
-                        Console.Error.WriteLine($"  [SAFETY] Blocked: {fullDesc}");
+                        LoggingService.Error("ScriptCommands", $"  [SAFETY] Blocked: {fullDesc}");
                         continue;
                     }
                     Console.WriteLine($"  [SAFETY] Confirmed: {fullDesc}");
@@ -218,7 +218,7 @@ public class ScriptCommand : ICommand
 
             if (!_commands.TryGetValue(cmdName, out var cmd))
             {
-                Console.Error.WriteLine($"  Unknown command '{cmdName}' in script, skipping.");
+                LoggingService.Warn("script", $"  Unknown command '{cmdName}' in script, skipping.");
                 continue;
             }
 
@@ -229,7 +229,7 @@ public class ScriptCommand : ICommand
             {
                 for (int healAttempt = 0; healAttempt < autoHealMaxRetry; healAttempt++)
                 {
-                    Console.Error.WriteLine($"  [AUTO-HEAL] Attempt {healAttempt + 1}/{autoHealMaxRetry} for: {cmdName} {string.Join(" ", cmdArgs)}");
+                    LoggingService.Warn("script", $"  [AUTO-HEAL] Attempt {healAttempt + 1}/{autoHealMaxRetry} for: {cmdName} {string.Join(" ", cmdArgs)}");
                     LoggingService.Warn("auto-heal", $"Attempt {healAttempt + 1}/{autoHealMaxRetry} for: {cmdName} {string.Join(" ", cmdArgs)}");
 
                     try { await SafetyGuard.DismissWarningDialogs(revitWindow, ct); } catch { }
@@ -254,7 +254,7 @@ public class ScriptCommand : ICommand
                             }
                             else
                             {
-                                Console.Error.WriteLine($"  [AUTO-HEAL] Element '{elementName}' not found for UiMap registration");
+                                LoggingService.Warn("script", $"  [AUTO-HEAL] Element '{elementName}' not found for UiMap registration");
                             }
                         }
                         catch (Exception ex)

@@ -34,8 +34,8 @@ public class CvCaptureCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: cv-capture <name> --region x,y,w,h");
-            Console.Error.WriteLine("       cv-capture <name> --element \"ButtonName\"");
+            LoggingService.Error("CvCaptureCommand", "Usage: cv-capture <name> --region x,y,w,h");
+            LoggingService.Error("CvCaptureCommand", "       cv-capture <name> --element \"ButtonName\"");
             return 1;
         }
 

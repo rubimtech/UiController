@@ -14,7 +14,7 @@ public class SetValueCommand : ICommand
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("Usage: set-value <name> <text>");
+            LoggingService.Error("SetValueCommand", "Usage: set-value <name> <text>");
             return Task.FromResult(1);
         }
 

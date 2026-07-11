@@ -77,15 +77,32 @@ public static class MouseControl
                 var element = automation.FromPoint(new Point(x, y));
                 if (element != null)
                 {
+                    if (element.Patterns.Invoke.TryGetPattern(out var invokePattern))
+                    {
+                        invokePattern.Invoke();
+                        await Task.Delay(30, ct);
+                        LoggingService.Info("MouseControl", "ClickAtUia: InvokePattern");
+                        return;
+                    }
+
+                    var hwnd = new IntPtr(Convert.ToInt32(element.Properties.NativeWindowHandle.Value));
+                    if (hwnd != IntPtr.Zero && Win32Helper.PostClick(hwnd))
+                    {
+                        await Task.Delay(30, ct);
+                        LoggingService.Info("MouseControl", "ClickAtUia: PostMessage");
+                        return;
+                    }
+
                     element.Click();
                     await Task.Delay(30, ct);
+                    LoggingService.Warn("MouseControl", "ClickAtUia: FlaUI fallback (physical mouse)");
                     return;
                 }
             }
         }
         catch (Exception ex)
         {
-            LoggingService.Warn("Safe", $"ClickAtUia InvokePattern: {ex.Message}");
+            LoggingService.Warn("Safe", $"ClickAtUia: {ex.Message}");
         }
 
         var wad = Program.WadClient;
@@ -93,10 +110,11 @@ public static class MouseControl
         {
             wad.ClickAt(x, y);
             await Task.Delay(30, ct);
+            LoggingService.Info("MouseControl", "ClickAtUia: WinAppDriver");
             return;
         }
 
-        Console.Error.WriteLine("ClickAtUia: no UIA automation or WinAppDriver available");
+        LoggingService.Error("MouseControl", "ClickAtUia: no method available");
     }
 
     public static async Task ClickElement(AutomationElement element, CancellationToken ct = default)
@@ -111,12 +129,25 @@ public static class MouseControl
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Mouse.ClickElement failed: {ex.Message}");
+            LoggingService.Error("MouseControl", $"Mouse.ClickElement failed: {ex.Message}");
         }
     }
 
     public static async Task Drag(int x1, int y1, int x2, int y2, int steps = 10, CancellationToken ct = default)
     {
+        if (Program.IsUiaOnly)
+        {
+            var wad = Program.WadClient;
+            if (wad != null && wad.IsConnected)
+            {
+                wad.Drag(x1, y1, x2, y2, steps);
+                await Task.Delay(100, ct);
+                return;
+            }
+            LoggingService.Error("MouseControl", "Drag: no WinAppDriver available in UIA-only mode");
+            return;
+        }
+
         SetCursorPos(x1, y1);
         await Task.Delay(100, ct);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);

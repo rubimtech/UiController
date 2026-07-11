@@ -57,6 +57,11 @@ public static class LlmVisionClient
 
     private static string GetEnv(string name) => Environment.GetEnvironmentVariable(name) ?? "";
 
+    private static string? GetDefaultModel(string providerName)
+    {
+        return _providers.FirstOrDefault(p => p.Name == providerName)?.DefaultModel;
+    }
+
     public static List<LlmProviderInfo> GetAvailableProviders() => _providers.ToList();
 
     public static string? ResolveProvider(string? name)
@@ -84,6 +89,10 @@ public static class LlmVisionClient
 
         try
         {
+            var logModel = model ?? GetDefaultModel(resolvedProvider);
+            LoggingService.Info("LlmVisionClient",
+                $"[LLM] Sending screenshot to {resolvedProvider}/{logModel}");
+
             var (content, usedProvider, usedModel) = resolvedProvider switch
             {
                 "routerai" => await CallRouterAIAsync(description, base64Image, model, cts.Token),
@@ -117,12 +126,12 @@ public static class LlmVisionClient
         }
         catch (TaskCanceledException)
         {
-            Console.Error.WriteLine($"[llm] {resolvedProvider}: request timed out after {timeoutSec}s");
+            LoggingService.Error("LlmVisionClient", $"[llm] {resolvedProvider}: request timed out after {timeoutSec}s");
             return null;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[llm] {resolvedProvider}: {ex.Message}");
+            LoggingService.Error("LlmVisionClient", $"[llm] {resolvedProvider}: {ex.Message}");
             return null;
         }
     }
@@ -270,7 +279,7 @@ public static class LlmVisionClient
         }
         catch (HttpRequestException ex)
         {
-            Console.Error.WriteLine($"[llm] ollama not available: {ex.Message}");
+            LoggingService.Error("LlmVisionClient", $"[llm] ollama not available: {ex.Message}");
             return (null, "ollama", usedModel);
         }
     }

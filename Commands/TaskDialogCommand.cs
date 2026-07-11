@@ -15,7 +15,7 @@ public class TaskDialogCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: taskdialog <title> [read|click <button>|expand]");
+            LoggingService.Error("TaskDialogCommand", "Usage: taskdialog <title> [read|click <button>|expand]");
             return 1;
         }
 
@@ -91,7 +91,7 @@ public class TaskDialogCommand : ICommand
             return 0;
         }
 
-        Console.Error.WriteLine($"Unknown action: {action}");
+        LoggingService.Error("TaskDialogCommand", $"Unknown action: {action}");
         return 1;
     }
 

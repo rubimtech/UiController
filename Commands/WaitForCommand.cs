@@ -13,7 +13,7 @@ public class WaitForCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: wait-for <title> [timeout]");
+            LoggingService.Error("WaitForCommand", "Usage: wait-for <title> [timeout]");
             return 1;
         }
         
@@ -62,7 +62,7 @@ public class WaitCloseCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: wait-close <title> [timeout]");
+            LoggingService.Error("WaitForCommand", "Usage: wait-close <title> [timeout]");
             return 1;
         }
         
@@ -101,7 +101,7 @@ public class WaitForElementCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: wait-element <name> [timeout]");
+            LoggingService.Error("WaitForCommand", "Usage: wait-element <name> [timeout]");
             return 1;
         }
         

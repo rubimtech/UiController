@@ -1,9 +1,11 @@
 ﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace RevitUiController.Commands;
 
+[Experimental("RevitApi")]
 public class RevitApiCommand : ICommand
 {
     public string Name => "revit-api";
@@ -14,7 +16,7 @@ public class RevitApiCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: revit-api <command> [--payload <json>]");
+            LoggingService.Error("RevitApiCommand", "Usage: revit-api <command> [--payload <json>]");
             return Task.FromResult(1);
         }
 
@@ -68,6 +70,7 @@ public class RevitApiCommand : ICommand
     }
 }
 
+[Experimental("RevitApi")]
 public class RevitApiSelectCommand : ICommand
 {
     public string Name => "revit-select";
@@ -78,7 +81,7 @@ public class RevitApiSelectCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: revit-select <element-id> [element-id ...]");
+            LoggingService.Error("RevitApiCommand", "Usage: revit-select <element-id> [element-id ...]");
             return Task.FromResult(1);
         }
 
@@ -109,6 +112,7 @@ public class RevitApiSelectCommand : ICommand
     }
 }
 
+[Experimental("RevitApi")]
 public class RevitApiGetCommand : ICommand
 {
     public string Name => "revit-get";
@@ -119,7 +123,7 @@ public class RevitApiGetCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: revit-get <query> (e.g. 'views', 'categories', 'elements')");
+            LoggingService.Error("RevitApiCommand", "Usage: revit-get <query> (e.g. 'views', 'categories', 'elements')");
             return Task.FromResult(1);
         }
 

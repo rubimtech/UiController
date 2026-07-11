@@ -21,6 +21,8 @@ public class PipeBridgeClient : IDisposable
 
     public bool Connect(int timeoutMs = 5000)
     {
+        // TODO: добавить token-аутентификацию для защиты named pipe.
+        // Сейчас любой процесс на машине может подключиться к ReVibe.
         try
         {
             _pipe = new NamedPipeClientStream(".", "ReVibe", PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -37,7 +39,7 @@ public class PipeBridgeClient : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Pipe connect failed: {ex.Message}");
+            LoggingService.Error("PipeBridgeClient", $"Pipe connect failed: {ex.Message}");
             return false;
         }
     }

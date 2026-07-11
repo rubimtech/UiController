@@ -15,7 +15,7 @@ public class ListItemsCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: list-items <name> [--max N]");
+            LoggingService.Error("ListItemsCommand", "Usage: list-items <name> [--max N]");
             return Task.FromResult(1);
         }
 
@@ -81,7 +81,7 @@ public class ListItemsCommand : ICommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ListItems warning: {ex.Message}");
+            LoggingService.Warn("ListItemsCommand", $"ListItems warning: {ex.Message}");
         }
 
         var result = new CommandResult

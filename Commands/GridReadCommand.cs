@@ -15,7 +15,7 @@ public class GridReadCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: grid-read <name> [--rows N] [--columns N]");
+            LoggingService.Error("GridReadCommand", "Usage: grid-read <name> [--rows N] [--columns N]");
             return Task.FromResult(1);
         }
 
@@ -78,7 +78,7 @@ public class GridReadCommand : ICommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"GridRead warning: {ex.Message}");
+            LoggingService.Warn("GridReadCommand", $"GridRead warning: {ex.Message}");
         }
 
         var result = new CommandResult

@@ -14,7 +14,7 @@ public class ScrollToCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: scroll-to <name> [--parent <p>]");
+            LoggingService.Error("ScrollToCommand", "Usage: scroll-to <name> [--parent <p>]");
             return 1;
         }
 
@@ -57,7 +57,7 @@ public class ScrollToCommand : ICommand
             }
             else
             {
-                Console.Error.WriteLine("Element does not support ScrollItemPattern, trying parent...");
+                LoggingService.Warn("ScrollToCommand", "Element does not support ScrollItemPattern, trying parent...");
                 var parent = AutomationHelper.FindParent(element);
                 if (parent != null)
                 {
@@ -73,7 +73,7 @@ public class ScrollToCommand : ICommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ScrollIntoView failed: {ex.Message}");
+            LoggingService.Error("ScrollToCommand", $"ScrollIntoView failed: {ex.Message}");
         }
 
         var result = new CommandResult

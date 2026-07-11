@@ -16,7 +16,7 @@ public class ComboReadCommand : ICommand
         var name = string.Join(" ", args);
         if (string.IsNullOrEmpty(name))
         {
-            Console.Error.WriteLine("Usage: combo-read <name>");
+            LoggingService.Error("ComboReadCommand", "Usage: combo-read <name>");
             return 1;
         }
 
@@ -82,7 +82,7 @@ public class ComboReadCommand : ICommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ComboRead warning: {ex.Message}");
+            LoggingService.Warn("ComboReadCommand", $"ComboRead warning: {ex.Message}");
         }
 
         var result = new CommandResult
