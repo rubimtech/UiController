@@ -53,7 +53,7 @@ dotnet run --project tools\RevitUiController -- <command> [args] [--flags]
 | `--window-title <title>` | Подключиться к окну по заголовку (contains) |
 | `--active` | Подключиться к текущему активному (foreground) окну |
 | `--connect-timeout <sec>` | Таймаут ожидания процесса (по умолчанию: 30 с) |
-| `--non-interactive` | CI-режим: все деструктивные действия автоматически отклоняются |
+| `--non-interactive` | CI-режим: все деструктивные действия (click, ribbon, revit-api, win32-click, key-combo, type-text и команды с ключевыми словами delete/purge/remove/overwrite) автоматически отклоняются без промпта |
 
 ---
 
@@ -359,15 +359,17 @@ cv-click wall-icon.png --threshold 0.75 --pretty
 ### 🤖 LLM Vision (AI-powered)
 
 ```powershell
-llm-find <description> [--region x,y,w,h] [--provider <p>] [--model <m>]  # Найти элемент по описанию
-llm-click <description> [--provider <p>] [--model <m>]                     # Найти и кликнуть
+llm-find <description> [--region x,y,w,h] --provider <p> [--model <m>]  # Найти элемент по описанию
+llm-click <description> --provider <p> [--model <m>]                     # Найти и кликнуть
 ```
 
-Провайдеры (автовыбор по приоритету, если ключ установлен):
+Провайдеры (требуется явный `--provider`):
 1. **RouterAI** — `ROUTERAI_API_KEY`, модель `qwen/qwen-vl-max`
 2. **OpenAI** — `OPENAI_API_KEY`, модель `gpt-4o`
 3. **Anthropic** — `ANTHROPIC_API_KEY`, модель `claude-sonnet-4-20250514`
 4. **Ollama** (локально, бесплатно) — `llama3.2-vision`
+
+> **Безопасность:** `--provider` обязателен. При каждом запросе в stderr выводится предупреждение `[LLM] Sending screenshot to {provider}/{model}`.
 
 ```powershell
 # Пример: найти кнопку "Стена" по описанию и кликнуть
@@ -389,6 +391,8 @@ revit-get views                       # Виды
 revit-api getParameter --payload '{"elementId":123,"paramName":"Height"}'  # Прочитать параметр
 revit-api setParameter --payload '{"elementId":123,"paramName":"Height","value":"3000"}'  # Установить
 ```
+
+> **⚠️ Экспериментально.** Требуется отдельный серверный аддин Revit API Bridge (`ReVibe`), который не входит в этот репозиторий. Pipe-соединение выполняется без аутентификации — рекомендуется использовать только в изолированной среде (localhost). Планируется: токен-аутентификация, документация по сборке аддина.
 
 ### 📜 Scripts & Recording
 
