@@ -150,7 +150,7 @@ public static class SafetyGuard
 
         if (revitPath == null || !File.Exists(revitPath))
         {
-            Console.Error.WriteLine("Revit executable not found.");
+            LoggingService.Warn("SafetyGuard", "Revit executable not found.");
             return null;
         }
 
@@ -163,7 +163,7 @@ public static class SafetyGuard
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to start Revit: {ex.Message}");
+            LoggingService.Error("SafetyGuard", $"Failed to start Revit: {ex.Message}");
             return null;
         }
     }
