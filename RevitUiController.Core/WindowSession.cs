@@ -123,6 +123,7 @@ public class WindowSession : IDisposable
 
     public static async Task<WindowSession?> Resolve(WindowQuery query, int timeoutSec = 30, CancellationToken ct = default)
     {
+        var defaultProcessName = CoreSettings.CurrentProfile.ProcessName;
         if (query.UseActive)
             return await ConnectToActive(ct: ct);
         if (query.Pid.HasValue)
@@ -131,7 +132,7 @@ public class WindowSession : IDisposable
             return await ConnectToProcess(processName: query.ProcessName, timeoutSec: timeoutSec, ct: ct);
         if (!string.IsNullOrEmpty(query.WindowTitle))
             return await ConnectByTitle(query.WindowTitle, timeoutSec, ct);
-        return await ConnectToProcess(processName: "Revit", timeoutSec: timeoutSec, ct: ct);
+        return await ConnectToProcess(processName: defaultProcessName, timeoutSec: timeoutSec, ct: ct);
     }
 
     public void RefreshWindow()

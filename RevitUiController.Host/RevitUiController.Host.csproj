@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RevitUiController.Core\RevitUiController.Core.csproj" />
+    <ProjectReference Include="..\RevitUiController.Revit\RevitUiController.Revit.csproj" />
   </ItemGroup>
 </Project>

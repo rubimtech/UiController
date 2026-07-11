@@ -74,8 +74,12 @@ public class RevitVersionProfile
 
     private static int? DetectFromFileVersion(FileVersionInfo fvi)
     {
-        var version = fvi.FileVersion ?? fvi.ProductVersion ?? "";
-        var parts = version.Split('.');
+        return DetectFromFileVersion(fvi.FileVersion ?? fvi.ProductVersion ?? "");
+    }
+
+    public static int? DetectFromFileVersion(string fileVersion)
+    {
+        var parts = fileVersion.Split('.');
         if (parts.Length > 0 && int.TryParse(parts[0], out var major))
         {
             if (major >= 2022 && major <= 2027)

@@ -12,8 +12,7 @@ public static class LoggingService
     static LoggingService()
     {
         LogDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ReVibe", "UiController", "logs");
+            CoreSettings.CurrentProfile.ConfigDirectory, "logs");
         Directory.CreateDirectory(LogDir);
         LogFile = Path.Combine(LogDir, $"uictrl_{DateTime.Now:yyyyMMdd}.log");
     }

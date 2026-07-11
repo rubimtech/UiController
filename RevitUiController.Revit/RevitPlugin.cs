@@ -8,5 +8,6 @@ public class RevitPlugin : IPlugin
 
     public void RegisterCommands(CommandRegistry registry)
     {
+        CoreSettings.CurrentProfile = new RevitProfile();
     }
 }

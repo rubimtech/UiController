@@ -1,5 +1,6 @@
 using RevitUiController.Core;
 using RevitUiController.Core.Models;
+using RevitUiController.Revit;
 
 namespace RevitUiController.Host;
 
@@ -154,7 +155,7 @@ public static class Program
             else if (args[i] == "--pid" && i + 1 < args.Length && int.TryParse(args[++i], out var pid))
                 CoreSettings.TargetPid = pid;
             else if (args[i] == "--process-name" && i + 1 < args.Length)
-                CoreSettings.ProcessName = args[++i];
+                CoreSettings.CurrentProfile = new GenericProfile(args[++i]);
             else if (args[i] == "--window-title" && i + 1 < args.Length)
                 CoreSettings.WindowTitle = args[++i];
             else if (args[i] == "--active")
@@ -167,6 +168,18 @@ public static class Program
             {
                 CoreSettings.IsUiaOnly = true;
                 WinAppDriverClient.Current = new WinAppDriverClient();
+            }
+            else if (args[i] == "--profile" && i + 1 < args.Length)
+            {
+                var profileName = args[++i].ToLowerInvariant();
+                if (profileName == "revit")
+                {
+                    CoreSettings.CurrentProfile = new RevitProfile();
+                }
+                else
+                {
+                    CoreSettings.CurrentProfile = new GenericProfile(profileName);
+                }
             }
             else
                 result.Add(args[i]);

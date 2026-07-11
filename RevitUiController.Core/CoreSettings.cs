@@ -4,11 +4,16 @@ namespace RevitUiController.Core;
 
 public static class CoreSettings
 {
+    public static IApplicationProfile CurrentProfile { get; set; } = new GenericProfile("Revit");
     public static bool IsPretty { get; set; }
     public static bool IsScreenshot { get; set; }
     public static string Verbosity { get; set; } = "normal";
     public static int? TargetPid { get; set; }
-    public static string ProcessName { get; set; } = "Revit";
+    public static string ProcessName
+    {
+        get => CurrentProfile.ProcessName;
+        set { /* kept for backward compat; profile overrides */ }
+    }
     public static string? WindowTitle { get; set; }
     public static bool UseActiveWindow { get; set; }
     public static int ConnectTimeoutSec { get; set; } = 30;
