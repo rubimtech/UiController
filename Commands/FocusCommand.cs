@@ -21,7 +21,7 @@ public class FocusCommand : ICommand
 
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: focus <title> [--pid <N> | --hwnd <hex>]");
+            LoggingService.Error("FocusCommand", "Usage: focus <title> [--pid <N> | --hwnd <hex>]");
             return Task.FromResult(1);
         }
 

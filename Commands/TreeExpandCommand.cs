@@ -14,7 +14,7 @@ public class TreeExpandCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: tree-expand <name> [--all] [--depth N]");
+            LoggingService.Error("TreeExpandCommand", "Usage: tree-expand <name> [--all] [--depth N]");
             return Task.FromResult(1);
         }
 

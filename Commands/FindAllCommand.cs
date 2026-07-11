@@ -14,7 +14,7 @@ public class FindAllCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: find-all <name> [--max N] [--type <ct>]");
+            LoggingService.Error("FindAllCommand", "Usage: find-all <name> [--max N] [--type <ct>]");
             return Task.FromResult(1);
         }
 

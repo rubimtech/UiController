@@ -14,7 +14,7 @@ public class HighlightCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: highlight <element-name> [duration-ms]");
+            LoggingService.Error("HighlightCommand", "Usage: highlight <element-name> [duration-ms]");
             return Task.FromResult(1);
         }
 

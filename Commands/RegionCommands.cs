@@ -14,14 +14,14 @@ public class ScreenshotRegionCommand : ICommand
     {
         if (args.Length < 4)
         {
-            Console.Error.WriteLine("Usage: screenshot-region <x> <y> <w> <h>");
+            LoggingService.Error("RegionCommands", "Usage: screenshot-region <x> <y> <w> <h>");
             return Task.FromResult(1);
         }
 
         if (!int.TryParse(args[0], out var x) || !int.TryParse(args[1], out var y) ||
             !int.TryParse(args[2], out var w) || !int.TryParse(args[3], out var h))
         {
-            Console.Error.WriteLine("Invalid coordinates: x y w h must be integers");
+            LoggingService.Error("RegionCommands", "Invalid coordinates: x y w h must be integers");
             return Task.FromResult(1);
         }
 
@@ -47,14 +47,14 @@ public class HighlightRegionCommand : ICommand
     {
         if (args.Length < 4)
         {
-            Console.Error.WriteLine("Usage: highlight-region <x> <y> <w> <h> [ms]");
+            LoggingService.Error("RegionCommands", "Usage: highlight-region <x> <y> <w> <h> [ms]");
             return Task.FromResult(1);
         }
 
         if (!int.TryParse(args[0], out var x) || !int.TryParse(args[1], out var y) ||
             !int.TryParse(args[2], out var w) || !int.TryParse(args[3], out var h))
         {
-            Console.Error.WriteLine("Invalid coordinates: x y w h must be integers");
+            LoggingService.Error("RegionCommands", "Invalid coordinates: x y w h must be integers");
             return Task.FromResult(1);
         }
 

@@ -15,7 +15,7 @@ public class TableReadCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: table-read <name> [--rows N]");
+            LoggingService.Error("TableReadCommand", "Usage: table-read <name> [--rows N]");
             return Task.FromResult(1);
         }
 
@@ -91,7 +91,7 @@ public class TableReadCommand : ICommand
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"TableRead warning: {ex.Message}");
+            LoggingService.Warn("TableReadCommand", $"TableRead warning: {ex.Message}");
         }
 
         var result = new CommandResult

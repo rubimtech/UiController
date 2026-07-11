@@ -16,7 +16,7 @@ public class PropertySheetBatchCommand : ICommand
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("Usage: ps-batch <dialog-title> <json-payload> [--tab <tab-name>] [--timeout <sec>]");
+            LoggingService.Error("BatchCommands", "Usage: ps-batch <dialog-title> <json-payload> [--tab <tab-name>] [--timeout <sec>]");
             return 1;
         }
 

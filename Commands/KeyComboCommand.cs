@@ -15,7 +15,7 @@ public class KeyComboCommand : ICommand
         var keys = string.Join(" ", args);
         if (string.IsNullOrEmpty(keys))
         {
-            Console.Error.WriteLine("Usage: key-combo <keys>\nExamples:\n  ^c  = Ctrl+C\n  ^v  = Ctrl+V\n  %{F4} = Alt+F4\n  {TAB} = Tab\n  {ENTER} = Enter\n  ^+s = Ctrl+Shift+S");
+            LoggingService.Error("KeyComboCommand", "Usage: key-combo <keys>\nExamples:\n  ^c  = Ctrl+C\n  ^v  = Ctrl+V\n  %{F4} = Alt+F4\n  {TAB} = Tab\n  {ENTER} = Enter\n  ^+s = Ctrl+Shift+S");
             return Task.FromResult(1);
         }
 

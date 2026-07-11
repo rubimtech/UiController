@@ -14,7 +14,7 @@ public class CacheFindCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: cached-find <name>");
+            LoggingService.Error("CacheCommands", "Usage: cached-find <name>");
             return Task.FromResult(1);
         }
 
