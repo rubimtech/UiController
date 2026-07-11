@@ -1,9 +1,11 @@
 ﻿using FlaUI.Core.AutomationElements;
 using RevitUiController.Models;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace RevitUiController.Commands;
 
+[Experimental("RevitApi")]
 public class RevitApiCommand : ICommand
 {
     public string Name => "revit-api";
@@ -68,6 +70,7 @@ public class RevitApiCommand : ICommand
     }
 }
 
+[Experimental("RevitApi")]
 public class RevitApiSelectCommand : ICommand
 {
     public string Name => "revit-select";
@@ -109,6 +112,7 @@ public class RevitApiSelectCommand : ICommand
     }
 }
 
+[Experimental("RevitApi")]
 public class RevitApiGetCommand : ICommand
 {
     public string Name => "revit-get";
