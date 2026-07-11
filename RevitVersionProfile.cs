@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using FlaUI.Core.AutomationElements;
 using Microsoft.Win32;
 
@@ -30,15 +31,6 @@ public class RevitVersionProfile
 
     public static DetectedVersion DetectVersion(AutomationElement revitWindow, Process? process = null)
     {
-        var title = revitWindow.Name ?? "";
-        foreach (var (year, _) in Profiles)
-            if (title.Contains(year.ToString()))
-                return new DetectedVersion(year, "window_title");
-
-        var fromRegistry = DetectFromRegistry();
-        if (fromRegistry.HasValue)
-            return new DetectedVersion(fromRegistry.Value, "registry");
-
         if (process != null)
         {
             try
@@ -53,6 +45,15 @@ public class RevitVersionProfile
             }
             catch { }
         }
+
+        var fromRegistry = DetectFromRegistry();
+        if (fromRegistry.HasValue)
+            return new DetectedVersion(fromRegistry.Value, "registry");
+
+        var title = revitWindow.Name ?? "";
+        var match = Regex.Match(title, @"\b(202[2-7])\b");
+        if (match.Success)
+            return new DetectedVersion(int.Parse(match.Groups[1].Value), "window_title");
 
         return new DetectedVersion(2026, "default");
     }
@@ -101,6 +102,12 @@ public class RevitVersionProfile
     }
 
     private static readonly int[] KnownYears = [2022, 2023, 2024, 2025, 2026, 2027];
+
+    public static int DetectYearFromTitle(string title)
+    {
+        var match = Regex.Match(title, @"\b(202[2-7])\b");
+        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+    }
 
     public static RevitVersionProfile ForYear(int year)
     {

@@ -37,7 +37,7 @@ public class PipeBridgeClient : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Pipe connect failed: {ex.Message}");
+            LoggingService.Error("PipeBridgeClient", $"Pipe connect failed: {ex.Message}");
             return false;
         }
     }
