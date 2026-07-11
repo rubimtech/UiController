@@ -13,4 +13,9 @@
     <ProjectReference Include="..\RevitUiController.Core\RevitUiController.Core.csproj" />
     <ProjectReference Include="..\RevitUiController.Revit\RevitUiController.Revit.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="config.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

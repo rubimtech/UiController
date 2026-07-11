@@ -11,6 +11,7 @@ public static class Program
     private static CommandRegistry Registry { get; } = new();
     private static CancellationTokenSource Cts { get; } = new();
     private static IServiceProvider? ServiceProvider { get; set; }
+    private static ConfigModel? _config;
 
     public static async Task<int> Main(string[] args)
     {
@@ -19,6 +20,10 @@ public static class Program
             e.Cancel = true;
             Cts.Cancel();
         };
+
+        _config = ConfigLoader.Load();
+        CoreSettings.Verbosity = _config.Defaults.Verbosity;
+        CoreSettings.ConnectTimeoutSec = _config.Defaults.ConnectTimeout;
 
         ParseProfileFlag(args);
 
@@ -168,6 +173,10 @@ public static class Program
                 {
                     CoreSettings.CurrentProfile = new RevitProfile();
                 }
+                else if (_config?.Profiles.TryGetValue(profileName, out var cfg) == true)
+                {
+                    CoreSettings.CurrentProfile = ConfigLoader.CreateProfile(profileName, cfg);
+                }
                 else
                 {
                     CoreSettings.CurrentProfile = new GenericProfile(profileName);
@@ -295,6 +304,10 @@ public static class Program
                 if (profileName == "revit")
                 {
                     CoreSettings.CurrentProfile = new RevitProfile();
+                }
+                else if (_config?.Profiles.TryGetValue(profileName, out var cfg) == true)
+                {
+                    CoreSettings.CurrentProfile = ConfigLoader.CreateProfile(profileName, cfg);
                 }
                 else
                 {

@@ -1,0 +1,24 @@
+profiles:
+  revit:
+    processName: Revit
+    displayName: Autodesk Revit
+    pipeName: ReVibe
+    executablePaths:
+      - "C:\\Program Files\\Autodesk\\Revit 2026\\Revit.exe"
+      - "C:\\Program Files\\Autodesk\\Revit 2025\\Revit.exe"
+      - "C:\\Program Files\\Autodesk\\Revit 2024\\Revit.exe"
+    configDirectory: "%LOCALAPPDATA%/ReVibe/UiController/"
+    uiMap: uimap.yaml
+    scriptsDir: scripts
+    templatesDir: templates
+    knownYears: [2022, 2023, 2024, 2025, 2026, 2027]
+    llmPrompt: "Look at this screenshot of Autodesk Revit."
+
+  notepad:
+    processName: notepad
+    displayName: Windows Notepad
+
+defaults:
+  profile: revit
+  connectTimeout: 30
+  verbosity: normal
