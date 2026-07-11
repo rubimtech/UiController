@@ -15,7 +15,7 @@ public class InvokeCommand : ICommand
         var name = string.Join(" ", args);
         if (string.IsNullOrEmpty(name))
         {
-            Console.Error.WriteLine("Usage: invoke <name>");
+            LoggingService.Error("InvokeCommand", "Usage: invoke <name>");
             return Task.FromResult(1);
         }
 

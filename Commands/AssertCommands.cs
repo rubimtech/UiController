@@ -15,7 +15,7 @@ public class AssertDialogCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: assert-dialog <title> [check]");
+            LoggingService.Error("AssertCommands", "Usage: assert-dialog <title> [check]");
             return Task.FromResult(1);
         }
 
@@ -144,7 +144,7 @@ public class AssertDialogCommand : ICommand
             return Task.FromResult(ok ? 0 : 1);
         }
 
-        Console.Error.WriteLine($"Unknown assert check: {check}");
+        LoggingService.Error("AssertCommands", $"Unknown assert check: {check}");
         return Task.FromResult(1);
     }
 
@@ -250,7 +250,7 @@ public class AssertRibbonCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: assert-ribbon <tab-name> [button <name>]");
+            LoggingService.Error("AssertCommands", "Usage: assert-ribbon <tab-name> [button <name>]");
             return Task.FromResult(1);
         }
 
@@ -351,7 +351,7 @@ public class AssertRibbonCommand : ICommand
             return Task.FromResult(ok ? 0 : 1);
         }
 
-        Console.Error.WriteLine($"Unknown assert-ribbon check: {args[1]}");
+        LoggingService.Error("AssertCommands", $"Unknown assert-ribbon check: {args[1]}");
         return Task.FromResult(1);
     }
 
@@ -385,7 +385,7 @@ public class AssertViewCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: assert-view <name> [active]");
+            LoggingService.Error("AssertCommands", "Usage: assert-view <name> [active]");
             return Task.FromResult(1);
         }
 

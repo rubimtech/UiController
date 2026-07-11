@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
@@ -9,19 +8,19 @@ public static class AutomationHelper
 {
     public static AutomationElement[] SafeGetChildren(AutomationElement element, int timeoutMs = 4000)
     {
-        return ((Func<AutomationElement[]>)(() =>
+        try
         {
-            using var cts = new CancellationTokenSource(timeoutMs);
-            try
-            {
-                return element.FindAllChildren().ToArray();
-            }
-            catch (Exception ex)
-            {
-                LoggingService.Warn(nameof(SafeGetChildren), ex.Message);
-                return Array.Empty<AutomationElement>();
-            }
-        })).Safe("SafeGetChildren") ?? Array.Empty<AutomationElement>();
+            var task = Task.Run(() => element.FindAllChildren().ToArray());
+            if (task.Wait(timeoutMs))
+                return task.Result;
+            LoggingService.Warn(nameof(SafeGetChildren), $"Timeout after {timeoutMs}ms");
+            return Array.Empty<AutomationElement>();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Warn(nameof(SafeGetChildren), ex.Message);
+            return Array.Empty<AutomationElement>();
+        }
     }
 
     public static List<AutomationElement> FindControlsByName(AutomationElement parent, string name, int maxResults = 100)
@@ -31,41 +30,35 @@ public static class AutomationHelper
         var rootChildren = SafeGetChildren(parent, 8000);
         if (rootChildren.Length == 0) return results;
 
-        var bag = new ConcurrentBag<AutomationElement>();
-        var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = 4 };
-
-        Parallel.ForEach(rootChildren, parallelOpts, child =>
-        {
-            var queue = new Queue<AutomationElement>();
+        var queue = new Queue<AutomationElement>();
+        foreach (var child in rootChildren)
             queue.Enqueue(child);
-            var localScanned = 0;
 
-            while (queue.Count > 0 && localScanned < 500 && bag.Count < maxResults)
+        var scanned = 0;
+        while (queue.Count > 0 && scanned < 500 && results.Count < maxResults)
+        {
+            var current = queue.Dequeue();
+            scanned++;
+
+            var children = SafeGetChildren(current, 3000);
+            foreach (var c in children)
             {
-                var current = queue.Dequeue();
-                localScanned++;
-
-                var children = SafeGetChildren(current, 3000);
-                foreach (var c in children)
+                try
                 {
-                    try
+                    var cName = c.Name ?? "";
+                    var autoId = c.AutomationId ?? "";
+                    if (cName.Contains(name, StringComparison.OrdinalIgnoreCase) ||
+                        autoId.Contains(name, StringComparison.OrdinalIgnoreCase))
                     {
-                        var cName = c.Name ?? "";
-                        var autoId = c.AutomationId ?? "";
-                        if (cName.Contains(name, StringComparison.OrdinalIgnoreCase) ||
-                            autoId.Contains(name, StringComparison.OrdinalIgnoreCase))
-                        {
-                            bag.Add(c);
-                            if (bag.Count >= maxResults) return;
-                        }
-                        queue.Enqueue(c);
+                        results.Add(c);
+                        if (results.Count >= maxResults) return results;
                     }
-                    catch (Exception ex) { LoggingService.Warn("Safe", $"FindControlsByName inner: {ex.Message}"); }
+                    queue.Enqueue(c);
                 }
+                catch (Exception ex) { LoggingService.Warn("Safe", $"FindControlsByName inner: {ex.Message}"); }
             }
-        });
+        }
 
-        results.AddRange(bag.Take(maxResults));
         return results;
     }
 
@@ -223,7 +216,7 @@ public static class AutomationHelper
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to click '{label}': {ex.Message}");
+            LoggingService.Error("AutomationHelper", $"Failed to click '{label}': {ex.Message}");
             return false;
         }
     }

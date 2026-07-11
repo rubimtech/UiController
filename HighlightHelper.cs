@@ -43,7 +43,7 @@ public static class HighlightHelper
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Highlight failed: {ex.Message}");
+            LoggingService.Error("HighlightHelper", $"Highlight failed: {ex.Message}");
         }
     }
 

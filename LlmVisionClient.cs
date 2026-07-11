@@ -117,12 +117,12 @@ public static class LlmVisionClient
         }
         catch (TaskCanceledException)
         {
-            Console.Error.WriteLine($"[llm] {resolvedProvider}: request timed out after {timeoutSec}s");
+            LoggingService.Error("LlmVisionClient", $"[llm] {resolvedProvider}: request timed out after {timeoutSec}s");
             return null;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[llm] {resolvedProvider}: {ex.Message}");
+            LoggingService.Error("LlmVisionClient", $"[llm] {resolvedProvider}: {ex.Message}");
             return null;
         }
     }
@@ -270,7 +270,7 @@ public static class LlmVisionClient
         }
         catch (HttpRequestException ex)
         {
-            Console.Error.WriteLine($"[llm] ollama not available: {ex.Message}");
+            LoggingService.Error("LlmVisionClient", $"[llm] ollama not available: {ex.Message}");
             return (null, "ollama", usedModel);
         }
     }

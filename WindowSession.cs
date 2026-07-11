@@ -61,17 +61,17 @@ public class WindowSession : IDisposable
                 }
 
                 var winInfo = ActiveWindowTracker.WindowFromHandle(hWnd);
-                Console.Error.WriteLine($"Connected to \"{window.Name}\" PID={process?.Id ?? 0}");
+                LoggingService.Info("WindowSession", $"Connected to \"{window.Name}\" PID={process?.Id ?? 0}");
                 return new WindowSession(automation, window, process!, targetPid, winInfo);
             }
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to connect to window: {ex.Message}");
+            LoggingService.Error("WindowSession", $"Failed to connect to window: {ex.Message}");
         }
 
         automation.Dispose();
-        Console.Error.WriteLine("Window not found via UIA.");
+        LoggingService.Warn("WindowSession", "Window not found via UIA.");
         return null;
     }
 
@@ -89,7 +89,7 @@ public class WindowSession : IDisposable
             }
             await Task.Delay(300, ct);
         }
-        Console.Error.WriteLine("No active window found.");
+        LoggingService.Error("WindowSession", "No active window found.");
         return null;
     }
 
@@ -117,7 +117,7 @@ public class WindowSession : IDisposable
             }
             await Task.Delay(500, ct);
         }
-        Console.Error.WriteLine($"Window with title '{title}' not found.");
+        LoggingService.Warn("WindowSession", $"Window with title '{title}' not found.");
         return null;
     }
 
@@ -159,13 +159,13 @@ public class WindowSession : IDisposable
             }
             else
             {
-                Console.Error.WriteLine($"PID {pid} is not a {processName} process (found: {p.ProcessName}).");
+                LoggingService.Error("WindowSession", $"PID {pid} is not a {processName} process (found: {p.ProcessName}).");
                 return null;
             }
         }
         catch (ArgumentException)
         {
-            Console.Error.WriteLine($"Process with PID {pid} not found, waiting up to {(deadline - DateTime.UtcNow).TotalSeconds:F0}s...");
+            LoggingService.Warn("WindowSession", $"Process with PID {pid} not found, waiting up to {(deadline - DateTime.UtcNow).TotalSeconds:F0}s...");
         }
 
         while (DateTime.UtcNow < deadline)
@@ -183,7 +183,7 @@ public class WindowSession : IDisposable
             catch (ArgumentException) { await Task.Delay(500, ct); }
         }
 
-        Console.Error.WriteLine($"Process PID={pid} not found after timeout.");
+        LoggingService.Warn("WindowSession", $"Process PID={pid} not found after timeout.");
         return null;
     }
 
@@ -207,7 +207,7 @@ public class WindowSession : IDisposable
             if (processes.Length > 0) return processes[0];
         }
 
-        Console.Error.WriteLine($"{processName} process not found.");
+        LoggingService.Warn("WindowSession", $"{processName} process not found.");
         return null;
     }
 

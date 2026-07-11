@@ -16,7 +16,7 @@ public class PropertySheetCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: ps <dialog-title> [fields|tabs|type|check|select|click]");
+            LoggingService.Error("DialogCommands", "Usage: ps <dialog-title> [fields|tabs|type|check|select|click]");
             return 1;
         }
 
@@ -183,7 +183,7 @@ public class PropertySheetCommand : ICommand
             return 0;
         }
 
-        Console.Error.WriteLine($"Unknown action: {args[1]}");
+        LoggingService.Error("DialogCommands", $"Unknown action: {args[1]}");
         return 1;
     }
 

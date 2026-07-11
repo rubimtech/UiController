@@ -48,7 +48,7 @@ public class ClipboardSetCommand : ICommand
         var text = string.Join(" ", args);
         if (string.IsNullOrEmpty(text))
         {
-            Console.Error.WriteLine("Usage: clipboard-set <text>");
+            LoggingService.Error("ClipboardCommands", "Usage: clipboard-set <text>");
             return Task.FromResult(1);
         }
 

@@ -15,7 +15,7 @@ public class ToggleCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: toggle <name> [on|off]");
+            LoggingService.Error("ToggleCommand", "Usage: toggle <name> [on|off]");
             return Task.FromResult(1);
         }
 

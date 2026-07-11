@@ -15,7 +15,7 @@ public class CvMatchCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]");
+            LoggingService.Error("CvCommands", "Usage: cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]");
             return 1;
         }
 
@@ -153,7 +153,7 @@ public class CvClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: cv-click <template.png> [--region x,y,w,h] [--threshold 0.8]");
+            LoggingService.Error("CvCommands", "Usage: cv-click <template.png> [--region x,y,w,h] [--threshold 0.8]");
             return 1;
         }
 

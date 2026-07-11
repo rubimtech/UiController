@@ -16,7 +16,7 @@ public class PatternsCommand : ICommand
         var name = string.Join(" ", args);
         if (string.IsNullOrEmpty(name))
         {
-            Console.Error.WriteLine("Usage: patterns <name>");
+            LoggingService.Error("PatternsCommand", "Usage: patterns <name>");
             return Task.FromResult(1);
         }
 

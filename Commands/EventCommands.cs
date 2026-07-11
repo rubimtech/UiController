@@ -14,7 +14,7 @@ public class ListenStartCommand : ICommand
         var evt = Program.CurrentSession?.Automation;
         if (evt == null)
         {
-            Console.Error.WriteLine("No automation session available. Connect to a window first.");
+            LoggingService.Error("EventCommands", "No automation session available. Connect to a window first.");
             return Task.FromResult(1);
         }
 

@@ -68,7 +68,7 @@ public class RevitInstanceManager
         var session = GetSession(pid);
         if (session == null)
         {
-            Console.Error.WriteLine($"No active session for PID {pid}. Use 'revit-instances' to list and connect.");
+            LoggingService.Error("RevitInstanceManager", $"No active session for PID {pid}. Use 'revit-instances' to list and connect.");
             return;
         }
 
@@ -79,7 +79,7 @@ public class RevitInstanceManager
         SessionContext.ActiveProcessName = session.Process?.ProcessName;
 
         var year = DetectYearFromTitle(session.Process?.MainWindowTitle ?? "");
-        Console.Error.WriteLine($"Switched to Revit {year} (PID={pid})");
+        LoggingService.Info("RevitInstanceManager", $"Switched to Revit {year} (PID={pid})");
     }
 
     public async Task<Process?> LaunchInstance(int year, string? projectPath = null)
@@ -92,13 +92,13 @@ public class RevitInstanceManager
         var revitPath = possiblePaths.FirstOrDefault(File.Exists);
         if (revitPath == null)
         {
-            Console.Error.WriteLine($"Revit {year} executable not found at {possiblePaths[0]}.");
+            LoggingService.Warn("RevitInstanceManager", $"Revit {year} executable not found at {possiblePaths[0]}.");
             return null;
         }
 
         if (!string.IsNullOrEmpty(projectPath) && !File.Exists(projectPath))
         {
-            Console.Error.WriteLine($"Project file not found: {projectPath}");
+            LoggingService.Warn("RevitInstanceManager", $"Project file not found: {projectPath}");
             return null;
         }
 
@@ -115,7 +115,7 @@ public class RevitInstanceManager
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to start Revit {year}: {ex.Message}");
+            LoggingService.Error("RevitInstanceManager", $"Failed to start Revit {year}: {ex.Message}");
             return null;
         }
     }
@@ -125,14 +125,14 @@ public class RevitInstanceManager
         var instances = ListInstances();
         if (instances.Count == 0)
         {
-            Console.Error.WriteLine("No running Revit instances found.");
+            LoggingService.Error("RevitInstanceManager", "No running Revit instances found.");
             return 1;
         }
 
         var foundCommand = Program.GetCommand(commandName);
         if (foundCommand == null)
         {
-            Console.Error.WriteLine($"Unknown command: {commandName}");
+            LoggingService.Error("RevitInstanceManager", $"Unknown command: {commandName}");
             return 1;
         }
 
@@ -140,12 +140,12 @@ public class RevitInstanceManager
 
         foreach (var inst in instances)
         {
-            Console.Error.WriteLine($"--- [{inst.Pid}] Revit {inst.Year} ---");
+            LoggingService.Error("RevitInstanceManager", $"--- [{inst.Pid}] Revit {inst.Year} ---");
 
             var session = await ConnectToInstance(inst.Pid);
             if (session == null)
             {
-                Console.Error.WriteLine($"  Failed to connect to PID {inst.Pid}");
+                LoggingService.Error("RevitInstanceManager", $"  Failed to connect to PID {inst.Pid}");
                 exitCode = 1;
                 continue;
             }
@@ -166,7 +166,7 @@ public class RevitInstanceManager
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"  Error on PID {inst.Pid}: {ex.Message}");
+                LoggingService.Error("RevitInstanceManager", $"  Error on PID {inst.Pid}: {ex.Message}");
                 exitCode = 1;
             }
             finally

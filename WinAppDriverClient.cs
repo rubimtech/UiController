@@ -44,7 +44,7 @@ public class WinAppDriverClient : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"WinAppDriver connect failed: {ex.Message}");
+            LoggingService.Error("WinAppDriverClient", $"WinAppDriver connect failed: {ex.Message}");
             return false;
         }
     }

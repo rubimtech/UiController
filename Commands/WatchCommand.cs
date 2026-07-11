@@ -14,7 +14,7 @@ public class WatchCommand : ICommand
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("Usage: watch <command> [args...] --interval <sec> --until <found|gone|enabled|disabled|text:substring> [--timeout <sec>]");
+            LoggingService.Error("WatchCommand", "Usage: watch <command> [args...] --interval <sec> --until <found|gone|enabled|disabled|text:substring> [--timeout <sec>]");
             return 1;
         }
 
@@ -34,7 +34,7 @@ public class WatchCommand : ICommand
 
         if (string.IsNullOrEmpty(condition) || cmdArgs.Count == 0)
         {
-            Console.Error.WriteLine("Usage: watch <command> [args...] --interval <sec> --until <condition> [--timeout <sec>]");
+            LoggingService.Error("WatchCommand", "Usage: watch <command> [args...] --interval <sec> --until <condition> [--timeout <sec>]");
             return 1;
         }
 
@@ -42,7 +42,7 @@ public class WatchCommand : ICommand
         var cmd = ProgramHelper.GetCommand(cmdName);
         if (cmd == null)
         {
-            Console.Error.WriteLine($"Unknown command: {cmdName}");
+            LoggingService.Error("WatchCommand", $"Unknown command: {cmdName}");
             return 1;
         }
 

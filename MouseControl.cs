@@ -96,7 +96,7 @@ public static class MouseControl
             return;
         }
 
-        Console.Error.WriteLine("ClickAtUia: no UIA automation or WinAppDriver available");
+        LoggingService.Error("MouseControl", "ClickAtUia: no UIA automation or WinAppDriver available");
     }
 
     public static async Task ClickElement(AutomationElement element, CancellationToken ct = default)
@@ -111,7 +111,7 @@ public static class MouseControl
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Mouse.ClickElement failed: {ex.Message}");
+            LoggingService.Error("MouseControl", $"Mouse.ClickElement failed: {ex.Message}");
         }
     }
 

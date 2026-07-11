@@ -14,7 +14,7 @@ public class Win32ClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: win32-click <name>");
+            LoggingService.Error("Win32Commands", "Usage: win32-click <name>");
             return Task.FromResult(1);
         }
 
