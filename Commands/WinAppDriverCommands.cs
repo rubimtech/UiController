@@ -19,8 +19,9 @@ public class WadConnectCommand : ICommand
             return Task.FromResult(1);
         }
 
-        using var client = new WinAppDriverClient();
-        var ok = client.Connect(hWnd);
+        if (Program.WadClient != null) Program.WadClient.Dispose();
+        Program.WadClient = new WinAppDriverClient();
+        var ok = Program.WadClient.Connect(hWnd);
         Console.Write(OutputFormatter.FormatResult(new CommandResult
         {
             Command = "wad-connect",
@@ -42,7 +43,7 @@ public class WadFindCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: wad-find <name> | wad-find --id <automation-id>");
+            LoggingService.Error("WinAppDriverCommands", "Usage: wad-find <name> | wad-find --id <automation-id>");
             return Task.FromResult(1);
         }
 
@@ -53,11 +54,17 @@ public class WadFindCommand : ICommand
             return Task.FromResult(1);
         }
 
-        using var client = new WinAppDriverClient();
-        if (!client.Connect(hWnd))
+        var client = Program.WadClient;
+        if (client == null || !client.IsConnected)
         {
-            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", ["Is WinAppDriver running on port 4723?"], Program.GlobalOptions));
-            return Task.FromResult(1);
+            client = new WinAppDriverClient();
+            if (!client.Connect(hWnd))
+            {
+                Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", ["Is WinAppDriver running on port 4723?"], Program.GlobalOptions));
+                return Task.FromResult(1);
+            }
+            Program.WadClient?.Dispose();
+            Program.WadClient = client;
         }
 
         string usingMethod, value;
@@ -94,7 +101,7 @@ public class WadClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: wad-click <name>");
+            LoggingService.Error("WinAppDriverCommands", "Usage: wad-click <name>");
             return Task.FromResult(1);
         }
 
@@ -106,11 +113,17 @@ public class WadClickCommand : ICommand
             return Task.FromResult(1);
         }
 
-        using var client = new WinAppDriverClient();
-        if (!client.Connect(hWnd))
+        var client = Program.WadClient;
+        if (client == null || !client.IsConnected)
         {
-            Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", null, Program.GlobalOptions));
-            return Task.FromResult(1);
+            client = new WinAppDriverClient();
+            if (!client.Connect(hWnd))
+            {
+                Console.Write(OutputFormatter.FormatError("ConnectionFailed", "WinAppDriver", null, Program.GlobalOptions));
+                return Task.FromResult(1);
+            }
+            Program.WadClient?.Dispose();
+            Program.WadClient = client;
         }
 
         var elementId = client.FindElement("name", name);
