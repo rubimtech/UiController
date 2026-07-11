@@ -38,15 +38,15 @@ public static class SafetyGuard
 
     public static bool ConfirmDestructiveAction(string description, int timeoutSeconds = 10)
     {
-        Console.Error.WriteLine($"[SAFETY] Destructive action detected: {description}");
+        LoggingService.Warn("SafetyGuard", $"Destructive action detected: {description}");
 
         if (IsNonInteractive || !Environment.UserInteractive)
         {
-            Console.Error.WriteLine("[SAFETY] Non-interactive mode — rejecting.");
+            LoggingService.Warn("SafetyGuard", "Non-interactive mode — rejecting.");
             return false;
         }
 
-        Console.Error.WriteLine("[SAFETY] Confirm? Type 'yes' to proceed, anything else to cancel:");
+        LoggingService.Warn("SafetyGuard", "Confirm? Type 'yes' to proceed, anything else to cancel:");
 
         try
         {
@@ -60,7 +60,7 @@ public static class SafetyGuard
         }
         catch (OperationCanceledException)
         {
-            Console.Error.WriteLine("[SAFETY] Timeout — rejecting.");
+            LoggingService.Warn("SafetyGuard", "Timeout — rejecting.");
         }
 
         return false;
