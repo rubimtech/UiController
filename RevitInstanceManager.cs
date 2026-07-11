@@ -197,10 +197,7 @@ public class RevitInstanceManager
 
     public static int DetectYearFromTitle(string title)
     {
-        for (int y = 2022; y <= 2027; y++)
-            if (title.Contains(y.ToString()))
-                return y;
-        return 0;
+        return RevitVersionProfile.DetectYearFromTitle(title);
     }
 
     private static string ExtractProjectPath(string title)
