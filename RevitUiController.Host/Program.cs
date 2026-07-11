@@ -1,5 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using RevitUiController.Core;
 using RevitUiController.Core.Models;
+using RevitUiController.Core.Services;
 using RevitUiController.Revit;
 
 namespace RevitUiController.Host;
@@ -8,6 +10,7 @@ public static class Program
 {
     private static CommandRegistry Registry { get; } = new();
     private static CancellationTokenSource Cts { get; } = new();
+    private static IServiceProvider? ServiceProvider { get; set; }
 
     public static async Task<int> Main(string[] args)
     {
@@ -17,8 +20,12 @@ public static class Program
             Cts.Cancel();
         };
 
+        var sp = ConfigureServices();
+        ServiceProvider = sp;
+
         RegisterBuiltinAliases();
-        LoadPlugins();
+        RegisterBuiltinCommands(sp);
+        LoadPlugins(sp);
 
         var cleanArgs = ParseGlobalFlags(args);
 
@@ -36,7 +43,7 @@ public static class Program
 
         var cmdName = cleanArgs[0].ToLowerInvariant();
 
-        var cmd = Registry.GetCommand(cmdName);
+        var cmd = ResolveCommand(cmdName, sp);
         if (cmd == null)
         {
             Console.Error.WriteLine($"Unknown command: {cmdName}");
@@ -88,7 +95,54 @@ public static class Program
         }
     }
 
-    private static void LoadPlugins()
+    private static IServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton<ILoggingService, LoggingServiceWrapper>();
+        services.AddSingleton<IAutomationService, AutomationService>();
+        services.AddSingleton<IScreenshotService, ScreenshotService>();
+        services.AddSingleton<IOutputFormatterService, OutputFormatterService>();
+        services.AddSingleton<IUiMapService, UiMapService>();
+        services.AddSingleton<ISafetyGuardService, SafetyGuardService>();
+        services.AddSingleton<IEventService, EventServiceWrapper>();
+        services.AddSingleton<IRecorderService, RecorderServiceWrapper>();
+        services.AddSingleton<ISessionContextService, SessionContextService>();
+        services.AddSingleton<ICvMatchService, CvMatchService>();
+        services.AddSingleton<ILlmVisionService, LlmVisionService>();
+
+        services.AddSingleton(Registry);
+
+        return services.BuildServiceProvider();
+    }
+
+    private static void RegisterBuiltinCommands(IServiceProvider sp)
+    {
+        foreach (var type in typeof(ICommand).Assembly.GetTypes()
+            .Where(t => t is { IsAbstract: false, IsClass: true } && typeof(ICommand).IsAssignableFrom(t)))
+        {
+            Registry.RegisterType(type);
+        }
+    }
+
+    private static ICommand? ResolveCommand(string name, IServiceProvider sp)
+    {
+        var cmdType = Registry.GetCommandType(name);
+        if (cmdType != null)
+        {
+            try
+            {
+                return ActivatorUtilities.CreateInstance(sp, cmdType) as ICommand;
+            }
+            catch
+            {
+            }
+        }
+
+        return Registry.GetCommand(name);
+    }
+
+    private static void LoadPlugins(IServiceProvider sp)
     {
         var pluginsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins");
         if (!Directory.Exists(pluginsDir))
@@ -103,7 +157,7 @@ public static class Program
                 {
                     if (typeof(IPlugin).IsAssignableFrom(type) && !type.IsAbstract)
                     {
-                        if (Activator.CreateInstance(type) is IPlugin plugin)
+                        if (ActivatorUtilities.CreateInstance(sp, type) is IPlugin plugin)
                         {
                             plugin.RegisterCommands(Registry);
                             LoggingService.Info("Host", $"Loaded plugin: {plugin.Name}");
