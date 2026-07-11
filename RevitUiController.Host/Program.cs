@@ -20,7 +20,9 @@ public static class Program
             Cts.Cancel();
         };
 
-        var sp = ConfigureServices();
+        ParseProfileFlag(args);
+
+        var sp = ConfigureServices(args);
         ServiceProvider = sp;
 
         RegisterBuiltinAliases();
@@ -53,23 +55,24 @@ public static class Program
 
         var windowManager = new DesktopWindowManager();
 
+        var provider = sp.GetRequiredService<IAutomationProvider>();
         WindowSession? session = null;
 
         if (CoreSettings.UseActiveWindow)
         {
-            session = await WindowSession.ConnectToActive(ct: Cts.Token);
+            session = await WindowSession.ConnectToActive(provider, ct: Cts.Token);
         }
         else if (CoreSettings.TargetPid.HasValue || CoreSettings.ProcessName != "Revit")
         {
-            session = await WindowSession.ConnectToProcess(CoreSettings.TargetPid, CoreSettings.ProcessName, CoreSettings.ConnectTimeoutSec, Cts.Token);
+            session = await WindowSession.ConnectToProcess(provider, CoreSettings.TargetPid, CoreSettings.ProcessName, CoreSettings.ConnectTimeoutSec, Cts.Token);
         }
         else if (!string.IsNullOrEmpty(CoreSettings.WindowTitle))
         {
-            session = await WindowSession.ConnectByTitle(CoreSettings.WindowTitle, CoreSettings.ConnectTimeoutSec, Cts.Token);
+            session = await WindowSession.ConnectByTitle(CoreSettings.WindowTitle, provider, CoreSettings.ConnectTimeoutSec, Cts.Token);
         }
         else
         {
-            session = await WindowSession.ConnectToProcess(CoreSettings.TargetPid, CoreSettings.ProcessName, CoreSettings.ConnectTimeoutSec, Cts.Token);
+            session = await WindowSession.ConnectToProcess(provider, CoreSettings.TargetPid, CoreSettings.ProcessName, CoreSettings.ConnectTimeoutSec, Cts.Token);
         }
 
         if (session == null)
@@ -95,9 +98,13 @@ public static class Program
         }
     }
 
-    private static IServiceProvider ConfigureServices()
+    private static IServiceProvider ConfigureServices(string[] args)
     {
         var services = new ServiceCollection();
+
+        var provider = CreateAutomationProvider(args);
+        services.AddSingleton(provider);
+        services.AddSingleton<IAutomationProvider>(provider);
 
         services.AddSingleton<ILoggingService, LoggingServiceWrapper>();
         services.AddSingleton<IAutomationService, AutomationService>();
@@ -114,6 +121,60 @@ public static class Program
         services.AddSingleton(Registry);
 
         return services.BuildServiceProvider();
+    }
+
+    private static IAutomationProvider CreateAutomationProvider(string[] args)
+    {
+        var providerName = "uia3";
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--provider" && i + 1 < args.Length)
+            {
+                providerName = args[i + 1].ToLowerInvariant();
+                break;
+            }
+        }
+
+        return providerName switch
+        {
+            "wad" => new WinAppDriverProvider(new WinAppDriverClient()),
+            "composite" => new CompositeAutomationProvider(
+                new UIA3AutomationProvider(),
+                new WinAppDriverProvider(new WinAppDriverClient())),
+            _ => new UIA3AutomationProvider()
+        };
+    }
+
+    private static void RegisterLauncher(IServiceCollection services)
+    {
+        if (CoreSettings.CurrentProfile is RevitProfile)
+        {
+            services.AddSingleton<IApplicationLauncher, RevitLauncher>();
+        }
+        else
+        {
+            services.AddSingleton<IApplicationLauncher, GenericLauncher>();
+        }
+    }
+
+    private static void ParseProfileFlag(string[] args)
+    {
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--profile" && i + 1 < args.Length)
+            {
+                var profileName = args[++i].ToLowerInvariant();
+                if (profileName == "revit")
+                {
+                    CoreSettings.CurrentProfile = new RevitProfile();
+                }
+                else
+                {
+                    CoreSettings.CurrentProfile = new GenericProfile(profileName);
+                }
+                break;
+            }
+        }
     }
 
     private static void RegisterBuiltinCommands(IServiceProvider sp)
@@ -222,6 +283,11 @@ public static class Program
             {
                 CoreSettings.IsUiaOnly = true;
                 WinAppDriverClient.Current = new WinAppDriverClient();
+            }
+            else if (args[i] == "--provider" && i + 1 < args.Length)
+            {
+                var providerName = args[++i].ToLowerInvariant();
+                CoreSettings.AutomationProviderName = providerName;
             }
             else if (args[i] == "--profile" && i + 1 < args.Length)
             {

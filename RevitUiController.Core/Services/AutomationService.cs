@@ -6,13 +6,25 @@ namespace RevitUiController.Core.Services;
 
 public class AutomationService : IAutomationService
 {
+    private readonly IAutomationProvider _provider;
     private UIA3Automation? _automation;
     private AutomationElement? _mainWindow;
     private Process? _process;
 
-    public UIA3Automation? Automation => _automation;
+    public AutomationService()
+        : this(new UIA3AutomationProvider())
+    {
+    }
+
+    public AutomationService(IAutomationProvider provider)
+    {
+        _provider = provider;
+    }
+
+    public IAutomationProvider Provider => _provider;
+    public UIA3Automation? Automation => _automation ?? _provider.UIA3;
     public AutomationElement? MainWindow => _mainWindow;
-    public bool IsConnected => _automation != null && _mainWindow != null;
+    public bool IsConnected => _mainWindow != null;
     public int? TargetPid { get; private set; }
 
     public async Task<bool> ConnectToProcess(int? targetPid = null, string processName = "Revit", int timeoutSec = 30, CancellationToken ct = default)
@@ -87,8 +99,7 @@ public class AutomationService : IAutomationService
     {
         try
         {
-            var automation = new UIA3Automation();
-            var window = automation.FromHandle(hWnd);
+            var window = _provider.GetRootElement(hWnd);
             if (window != null && !string.IsNullOrEmpty(window.Name))
             {
                 Process? process = existingProcess;
@@ -102,14 +113,12 @@ public class AutomationService : IAutomationService
                     catch { }
                 }
 
-                _automation = automation;
+                _automation = _provider.UIA3;
                 _mainWindow = window;
                 _process = process;
                 TargetPid = targetPid;
                 return true;
             }
-
-            automation.Dispose();
         }
         catch { }
         return false;

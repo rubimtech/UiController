@@ -12,6 +12,7 @@ public class WindowSession : IDisposable
     public Process Process { get; }
     public int? TargetPid { get; }
     public WindowInfo? WindowInfo { get; private set; }
+    public IAutomationProvider? Provider { get; }
 
     private WindowSession(UIA3Automation automation, AutomationElement mainWindow, Process process, int? targetPid = null, WindowInfo? info = null)
     {
@@ -22,7 +23,22 @@ public class WindowSession : IDisposable
         WindowInfo = info;
     }
 
+    private WindowSession(IAutomationProvider provider, AutomationElement mainWindow, Process process, int? targetPid = null, WindowInfo? info = null)
+    {
+        Provider = provider;
+        Automation = provider.UIA3 ?? new UIA3Automation();
+        MainWindow = mainWindow;
+        Process = process;
+        TargetPid = targetPid;
+        WindowInfo = info;
+    }
+
     public static async Task<WindowSession?> ConnectToProcess(int? targetPid = null, string processName = "Revit", int timeoutSec = 30, CancellationToken ct = default)
+    {
+        return await ConnectToProcess(new UIA3AutomationProvider(), targetPid, processName, timeoutSec, ct);
+    }
+
+    public static async Task<WindowSession?> ConnectToProcess(IAutomationProvider provider, int? targetPid = null, string processName = "Revit", int timeoutSec = 30, CancellationToken ct = default)
     {
         Process? process = null;
         var deadline = DateTime.UtcNow.AddSeconds(timeoutSec);
@@ -38,15 +54,19 @@ public class WindowSession : IDisposable
             if (process == null) return null;
         }
 
-        return ConnectToHandle(process.MainWindowHandle, process, targetPid);
+        return ConnectToHandle(process.MainWindowHandle, provider, process, targetPid);
     }
 
     public static WindowSession? ConnectToHandle(IntPtr hWnd, Process? existingProcess = null, int? targetPid = null)
     {
-        var automation = new UIA3Automation();
+        return ConnectToHandle(hWnd, new UIA3AutomationProvider(), existingProcess, targetPid);
+    }
+
+    public static WindowSession? ConnectToHandle(IntPtr hWnd, IAutomationProvider provider, Process? existingProcess = null, int? targetPid = null)
+    {
         try
         {
-            var window = automation.FromHandle(hWnd);
+            var window = provider.GetRootElement(hWnd);
             if (window != null && !string.IsNullOrEmpty(window.Name))
             {
                 Process? process = existingProcess;
@@ -62,7 +82,7 @@ public class WindowSession : IDisposable
 
                 var winInfo = ActiveWindowTracker.WindowFromHandle(hWnd);
                 LoggingService.Info("WindowSession", $"Connected to \"{window.Name}\" PID={process?.Id ?? 0}");
-                return new WindowSession(automation, window, process!, targetPid, winInfo);
+                return new WindowSession(provider, window, process!, targetPid, winInfo);
             }
         }
         catch (Exception ex)
@@ -70,12 +90,16 @@ public class WindowSession : IDisposable
             LoggingService.Error("WindowSession", $"Failed to connect to window: {ex.Message}");
         }
 
-        automation.Dispose();
         LoggingService.Warn("WindowSession", "Window not found via UIA.");
         return null;
     }
 
     public static async Task<WindowSession?> ConnectToActive(int timeoutSec = 5, CancellationToken ct = default)
+    {
+        return await ConnectToActive(new UIA3AutomationProvider(), timeoutSec, ct);
+    }
+
+    public static async Task<WindowSession?> ConnectToActive(IAutomationProvider provider, int timeoutSec = 5, CancellationToken ct = default)
     {
         var deadline = DateTime.UtcNow.AddSeconds(timeoutSec);
         while (DateTime.UtcNow < deadline)
@@ -84,7 +108,7 @@ public class WindowSession : IDisposable
             var hwnd = NativeMethods.GetForegroundWindow();
             if (hwnd != IntPtr.Zero)
             {
-                var session = ConnectToHandle(hwnd);
+                var session = ConnectToHandle(hwnd, provider);
                 if (session != null) return session;
             }
             await Task.Delay(300, ct);
@@ -94,6 +118,11 @@ public class WindowSession : IDisposable
     }
 
     public static async Task<WindowSession?> ConnectByTitle(string title, int timeoutSec = 30, CancellationToken ct = default)
+    {
+        return await ConnectByTitle(title, new UIA3AutomationProvider(), timeoutSec, ct);
+    }
+
+    public static async Task<WindowSession?> ConnectByTitle(string title, IAutomationProvider provider, int timeoutSec = 30, CancellationToken ct = default)
     {
         var deadline = DateTime.UtcNow.AddSeconds(timeoutSec);
         while (DateTime.UtcNow < deadline)
@@ -112,7 +141,7 @@ public class WindowSession : IDisposable
 
             if (found != IntPtr.Zero)
             {
-                var session = ConnectToHandle(found);
+                var session = ConnectToHandle(found, provider);
                 if (session != null) return session;
             }
             await Task.Delay(500, ct);
@@ -123,23 +152,31 @@ public class WindowSession : IDisposable
 
     public static async Task<WindowSession?> Resolve(WindowQuery query, int timeoutSec = 30, CancellationToken ct = default)
     {
+        return await Resolve(query, new UIA3AutomationProvider(), timeoutSec, ct);
+    }
+
+    public static async Task<WindowSession?> Resolve(WindowQuery query, IAutomationProvider provider, int timeoutSec = 30, CancellationToken ct = default)
+    {
         var defaultProcessName = CoreSettings.CurrentProfile.ProcessName;
         if (query.UseActive)
-            return await ConnectToActive(ct: ct);
+            return await ConnectToActive(provider, ct: ct);
         if (query.Pid.HasValue)
-            return await ConnectToProcess(query.Pid, timeoutSec: timeoutSec, ct: ct);
+            return await ConnectToProcess(provider, query.Pid, timeoutSec: timeoutSec, ct: ct);
         if (!string.IsNullOrEmpty(query.ProcessName))
-            return await ConnectToProcess(processName: query.ProcessName, timeoutSec: timeoutSec, ct: ct);
+            return await ConnectToProcess(provider, processName: query.ProcessName, timeoutSec: timeoutSec, ct: ct);
         if (!string.IsNullOrEmpty(query.WindowTitle))
-            return await ConnectByTitle(query.WindowTitle, timeoutSec, ct);
-        return await ConnectToProcess(processName: defaultProcessName, timeoutSec: timeoutSec, ct: ct);
+            return await ConnectByTitle(query.WindowTitle, provider, timeoutSec, ct);
+        return await ConnectToProcess(provider, processName: defaultProcessName, timeoutSec: timeoutSec, ct: ct);
     }
 
     public void RefreshWindow()
     {
         try
         {
-            MainWindow = Automation.FromHandle(Process.MainWindowHandle);
+            if (Provider != null)
+                MainWindow = Provider.GetRootElement(Process.MainWindowHandle);
+            else
+                MainWindow = Automation.FromHandle(Process.MainWindowHandle);
         }
         catch { }
     }

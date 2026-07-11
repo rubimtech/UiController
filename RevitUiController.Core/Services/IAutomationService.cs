@@ -12,5 +12,6 @@ public interface IAutomationService : IDisposable
     bool IsConnected { get; }
     AutomationElement? MainWindow { get; }
     UIA3Automation? Automation { get; }
+    IAutomationProvider? Provider { get; }
     int? TargetPid { get; }
 }

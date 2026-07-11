@@ -19,6 +19,7 @@ public static class CoreSettings
     public static int ConnectTimeoutSec { get; set; } = 30;
     public static bool IsNonInteractive { get; set; }
     public static bool IsUiaOnly { get; set; }
+    public static string AutomationProviderName { get; set; } = "uia3";
     public static CancellationTokenSource Cts { get; } = new();
     public static WindowSession? CurrentSession { get; set; }
     public static DesktopWindowManager? WindowManager { get; set; }
