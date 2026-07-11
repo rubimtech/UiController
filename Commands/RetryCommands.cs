@@ -14,7 +14,7 @@ public class RetryClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: retry-click <name> [--attempts N] [--delay Ms]");
+            LoggingService.Error("retry-click", "Usage: retry-click <name> [--attempts N] [--delay Ms]");
             return 1;
         }
 
@@ -72,7 +72,7 @@ public class RetryDialogCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: retry-dialog <title> [--attempts N] [--delay Ms]");
+            LoggingService.Error("RetryCommands", "Usage: retry-dialog <title> [--attempts N] [--delay Ms]");
             return 1;
         }
 

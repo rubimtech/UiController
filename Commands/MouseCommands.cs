@@ -14,7 +14,7 @@ public class MouseClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: mouse-click <x> <y> | mouse-click <element-name>");
+            LoggingService.Error("MouseCommands", "Usage: mouse-click <x> <y> | mouse-click <element-name>");
             return 1;
         }
 
@@ -66,7 +66,7 @@ public class MouseDragCommand : ICommand
             !int.TryParse(args[2], out var x2) ||
             !int.TryParse(args[3], out var y2))
         {
-            Console.Error.WriteLine("Usage: mouse-drag <x1> <y1> <x2> <y2>");
+            LoggingService.Error("MouseCommands", "Usage: mouse-drag <x1> <y1> <x2> <y2>");
             return 1;
         }
 
@@ -91,7 +91,7 @@ public class MouseScrollCommand : ICommand
     {
         if (args.Length == 0 || !int.TryParse(args[0], out var ticks))
         {
-            Console.Error.WriteLine("Usage: mouse-scroll <ticks> (negative = down, positive = up)");
+            LoggingService.Error("MouseCommands", "Usage: mouse-scroll <ticks> (negative = down, positive = up)");
             return 1;
         }
 
@@ -135,7 +135,7 @@ public class MouseTypeCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: mouse-type <text>");
+            LoggingService.Error("MouseCommands", "Usage: mouse-type <text>");
             return 1;
         }
 

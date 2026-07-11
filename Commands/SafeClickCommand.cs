@@ -14,7 +14,7 @@ public class SafeClickCommand : ICommand
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: safe-click <name>");
+            LoggingService.Error("SafeClickCommand", "Usage: safe-click <name>");
             return Task.FromResult(1);
         }
         

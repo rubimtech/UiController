@@ -16,7 +16,7 @@ public class CanvasClickCommand : ICommand
     {
         if (args.Length < 2 || !int.TryParse(args[0], out var x) || !int.TryParse(args[1], out var y))
         {
-            Console.Error.WriteLine("Usage: canvas-click <x> <y> [--relative]");
+            LoggingService.Error("CanvasCommands", "Usage: canvas-click <x> <y> [--relative]");
             return 1;
         }
 
@@ -94,7 +94,7 @@ public class CanvasDragCommand : ICommand
             !int.TryParse(args[2], out var x2) ||
             !int.TryParse(args[3], out var y2))
         {
-            Console.Error.WriteLine("Usage: canvas-drag <x1> <y1> <x2> <y2> [--relative]");
+            LoggingService.Error("CanvasCommands", "Usage: canvas-drag <x1> <y1> <x2> <y2> [--relative]");
             return 1;
         }
 
@@ -147,7 +147,7 @@ public class CanvasZoomCommand : ICommand
     {
         if (args.Length == 0 || !int.TryParse(args[0], out var factor))
         {
-            Console.Error.WriteLine("Usage: canvas-zoom <factor> (positive=in, negative=out)");
+            LoggingService.Error("CanvasCommands", "Usage: canvas-zoom <factor> (positive=in, negative=out)");
             return 1;
         }
 

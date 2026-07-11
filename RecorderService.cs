@@ -42,7 +42,7 @@ public static class RecorderService
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to save recording: {ex.Message}");
+            LoggingService.Error("RecorderService", $"Failed to save recording: {ex.Message}");
             return null;
         }
     }
@@ -64,7 +64,7 @@ public static class RecorderService
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to save recording: {ex.Message}");
+            LoggingService.Error("RecorderService", $"Failed to save recording: {ex.Message}");
             return null;
         }
     }

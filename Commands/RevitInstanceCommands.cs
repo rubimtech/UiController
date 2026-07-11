@@ -110,7 +110,7 @@ public class SessionSwitchCommand : UiCommandBase
         var session = manager.GetSession(pid);
 
         if (session == null)
-            Console.Error.WriteLine($"No active session for PID {pid}. Connecting...");
+            LoggingService.Error("RevitInstanceCommands", $"No active session for PID {pid}. Connecting...");
 
         manager.SwitchToInstance(pid);
 
