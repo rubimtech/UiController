@@ -1,7 +1,7 @@
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class ListenStartCommand : ICommand
 {

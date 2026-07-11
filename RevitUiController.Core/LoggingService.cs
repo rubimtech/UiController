@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class LoggingService
 {

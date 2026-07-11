@@ -1,14 +1,14 @@
 using System.IO;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 using System.Threading;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class LogsCommand : ICommand
 {
     public string Name => "logs";
-    public string Description => "Read RevitUiController or revitCopilot logs";
+    public string Description => "Read application logs";
     public string Usage => "logs [--tail N] [--since HH:mm] [--level Error] [--plugin]";
 
     public Task<int> ExecuteAsync(FlaUI.Core.AutomationElements.AutomationElement window, string[] args, CancellationToken ct = default)

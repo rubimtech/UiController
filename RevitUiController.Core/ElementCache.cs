@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using FlaUI.Core.AutomationElements;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class ElementCache
 {

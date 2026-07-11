@@ -1,4 +1,4 @@
-namespace RevitUiController.Core.Models;
+namespace UiController.Core.Models;
 
 public class UiState
 {

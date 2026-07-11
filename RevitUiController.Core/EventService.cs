@@ -5,7 +5,7 @@ using FlaUI.Core.EventHandlers;
 using FlaUI.Core.Identifiers;
 using FlaUI.UIA3;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class AutomationEventService : IDisposable
 {

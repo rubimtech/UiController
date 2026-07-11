@@ -1,9 +1,9 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class ComboReadCommand : ICommand
 {

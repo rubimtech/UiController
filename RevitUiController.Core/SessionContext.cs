@@ -1,6 +1,6 @@
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class SessionContext
 {

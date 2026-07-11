@@ -1,7 +1,7 @@
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public abstract class UiCommandBase : ICommand
 {

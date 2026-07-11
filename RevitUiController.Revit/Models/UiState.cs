@@ -1,4 +1,4 @@
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
 namespace RevitUiController.Revit.Models;
 

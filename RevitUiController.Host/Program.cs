@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
-using RevitUiController.Core;
-using RevitUiController.Core.Models;
-using RevitUiController.Core.Services;
+using UiController.Core;
+using UiController.Core.Models;
+using UiController.Core.Services;
 using RevitUiController.Revit;
 
-namespace RevitUiController.Host;
+namespace UiController.Host;
 
 public static class Program
 {
@@ -12,6 +12,13 @@ public static class Program
     private static CancellationTokenSource Cts { get; } = new();
     private static IServiceProvider? ServiceProvider { get; set; }
     private static ConfigModel? _config;
+
+    private static readonly Dictionary<string, string> DeprecatedCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["revit-restart"] = "Use  app-restart --profile revit  instead.",
+        ["revit-instances"] = "Use  app-instances --profile revit  instead.",
+        ["revit-api"] = "Use  pipe-api  instead.",
+    };
 
     public static async Task<int> Main(string[] args)
     {
@@ -49,6 +56,11 @@ public static class Program
         }
 
         var cmdName = cleanArgs[0].ToLowerInvariant();
+
+        if (DeprecatedCommands.TryGetValue(cmdName, out var deprecationMsg))
+        {
+            Console.Error.WriteLine($"[DEPRECATED] '{cmdName}' is deprecated. {deprecationMsg}");
+        }
 
         var cmd = ResolveCommand(cmdName, sp);
         if (cmd == null)
@@ -263,6 +275,13 @@ public static class Program
         Registry.RegisterAlias("sr", "screenshot-region");
         Registry.RegisterAlias("hr", "highlight-region");
         Registry.RegisterAlias("ri", "revit-instances");
+        Registry.RegisterAlias("ws", "window-screenshot");
+        Registry.RegisterAlias("ps", "process-list");
+        Registry.RegisterAlias("mc", "menu-click");
+        Registry.RegisterAlias("ml", "menu-list");
+        Registry.RegisterAlias("trs", "tree-select");
+        Registry.RegisterAlias("tbs", "tab-select");
+        Registry.RegisterAlias("scr", "scroll");
     }
 
     private static string[] ParseGlobalFlags(string[] args)
@@ -322,12 +341,51 @@ public static class Program
 
     private static void PrintCommandHelp(string commandName)
     {
-        var cmd = Registry.GetCommand(commandName);
-        if (cmd != null)
+        var isRevitProfile = CoreSettings.CurrentProfile is RevitProfile;
+        var coreAssembly = typeof(ICommand).Assembly;
+
+        if (commandName.Equals("generic", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine($"Command: {cmd.Name}");
-            Console.WriteLine($"Description: {cmd.Description}");
-            Console.WriteLine($"Usage: {cmd.Usage}");
+            var genericCommands = Registry.AllCommandTypes
+                .Where(kvp => kvp.Value.Assembly == coreAssembly)
+                .Select(kvp => Registry.GetCommand(kvp.Key) ?? Activator.CreateInstance(kvp.Value) as ICommand)
+                .Where(c => c != null)
+                .OrderBy(c => c!.Name)
+                .ToList();
+
+            Console.WriteLine("=== Generic Commands ===");
+            foreach (var cmd in genericCommands)
+            {
+                Console.WriteLine($"  {cmd!.Name,-22} {cmd.Description}");
+                Console.WriteLine($"      Usage: {cmd.Usage}");
+            }
+            return;
+        }
+
+        if (commandName.Equals("revit", StringComparison.OrdinalIgnoreCase))
+        {
+            var revitCommands = Registry.AllCommandTypes
+                .Where(kvp => kvp.Value.Assembly != coreAssembly)
+                .Select(kvp => Registry.GetCommand(kvp.Key) ?? Activator.CreateInstance(kvp.Value) as ICommand)
+                .Where(c => c != null)
+                .OrderBy(c => c!.Name)
+                .ToList();
+
+            Console.WriteLine("=== Revit Plugin Commands ===");
+            foreach (var cmd in revitCommands)
+            {
+                Console.WriteLine($"  {cmd!.Name,-22} {cmd.Description}");
+                Console.WriteLine($"      Usage: {cmd.Usage}");
+            }
+            return;
+        }
+
+        var cmdInstance = Registry.GetCommand(commandName);
+        if (cmdInstance != null)
+        {
+            Console.WriteLine($"Command: {cmdInstance.Name}");
+            Console.WriteLine($"Description: {cmdInstance.Description}");
+            Console.WriteLine($"Usage: {cmdInstance.Usage}");
         }
         else
         {
@@ -337,9 +395,47 @@ public static class Program
 
     private static void PrintHelp()
     {
-        Console.WriteLine("""
-RevitUiController — FlaUI-based UI automation tool
-Use --help <command> for command-specific help.
-""");
+        var isRevitProfile = CoreSettings.CurrentProfile is RevitProfile;
+        var coreAssembly = typeof(ICommand).Assembly;
+
+        var genericCommands = Registry.AllCommandTypes
+            .Where(kvp => kvp.Value.Assembly == coreAssembly)
+            .Select(kvp => Registry.GetCommand(kvp.Key) ?? Activator.CreateInstance(kvp.Value) as ICommand)
+            .Where(c => c != null)
+            .OrderBy(c => c!.Name)
+            .ToList();
+
+        var revitCommands = Registry.AllCommandTypes
+            .Where(kvp => kvp.Value.Assembly != coreAssembly)
+            .Select(kvp => Registry.GetCommand(kvp.Key) ?? Activator.CreateInstance(kvp.Value) as ICommand)
+            .Where(c => c != null)
+            .OrderBy(c => c!.Name)
+            .ToList();
+
+        Console.WriteLine("Ui Controller — Windows UI Automation CLI");
+        Console.WriteLine();
+
+        Console.WriteLine("=== Generic Commands ===");
+        foreach (var cmd in genericCommands)
+        {
+            Console.WriteLine($"  {cmd!.Name,-22} {cmd.Description}");
+        }
+
+        if (isRevitProfile && revitCommands.Count > 0)
+        {
+            Console.WriteLine();
+            Console.WriteLine("=== Revit Plugin Commands ===");
+            foreach (var cmd in revitCommands)
+            {
+                Console.WriteLine($"  {cmd!.Name,-22} {cmd.Description}");
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Use  --help <command>  for command-specific help.");
+        if (revitCommands.Count > 0 && !isRevitProfile)
+        {
+            Console.WriteLine("For Revit-specific help:  --profile revit --help");
+        }
     }
 }

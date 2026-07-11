@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.IO;
-using RevitUiController.Core.Models;
-using static RevitUiController.Core.NativeMethods;
+using UiController.Core.Models;
+using static UiController.Core.NativeMethods;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class ActiveWindowTracker : IDisposable
 {

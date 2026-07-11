@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class DesktopWindowManager : IDisposable
 {

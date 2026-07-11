@@ -1,7 +1,7 @@
 using FlaUI.Core.AutomationElements;
-using static RevitUiController.Core.AutomationEventService;
+using static UiController.Core.AutomationEventService;
 
-namespace RevitUiController.Core.Services;
+namespace UiController.Core.Services;
 
 public class EventServiceWrapper : IEventService
 {

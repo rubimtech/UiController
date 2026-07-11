@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class GenericProfile : IApplicationProfile
 {

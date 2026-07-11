@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class RecorderService
 {

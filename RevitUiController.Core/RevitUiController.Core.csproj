@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
-    <RootNamespace>RevitUiController.Core</RootNamespace>
+    <RootNamespace>UiController.Core</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FlaUI.UIA3" />

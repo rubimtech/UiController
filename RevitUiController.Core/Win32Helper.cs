@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class Win32Helper
 {

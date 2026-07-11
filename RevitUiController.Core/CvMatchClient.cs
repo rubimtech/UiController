@@ -4,10 +4,10 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenCvSharp;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using Point = OpenCvSharp.Point;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class CvMatchResult
 {

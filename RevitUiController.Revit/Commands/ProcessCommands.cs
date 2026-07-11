@@ -1,7 +1,7 @@
-using RevitUiController.Core;
+using UiController.Core;
 using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 
 namespace RevitUiController.Revit.Commands;

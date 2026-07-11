@@ -1,7 +1,7 @@
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core.Services;
+namespace UiController.Core.Services;
 
 public interface IOutputFormatterService
 {

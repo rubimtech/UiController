@@ -1,14 +1,14 @@
 using System.Text.Json;
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class CvMatchCommand : ICommand
 {
     public string Name => "cv-match";
-    public string Description => "Find a template image in the Revit window using OpenCV";
+    public string Description => "Find a template image in the active window using OpenCV";
     public string Usage => "cv-match <template.png> [--region x,y,w,h] [--threshold 0.8]";
 
     public async Task<int> ExecuteAsync(AutomationElement window, string[] args, CancellationToken ct = default)

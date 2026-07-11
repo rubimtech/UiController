@@ -1,6 +1,6 @@
 using FlaUI.Core.AutomationElements;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class HighlightHelper
 {

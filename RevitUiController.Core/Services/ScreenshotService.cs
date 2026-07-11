@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using FlaUI.Core.AutomationElements;
 
-namespace RevitUiController.Core.Services;
+namespace UiController.Core.Services;
 
 public class ScreenshotService : IScreenshotService
 {

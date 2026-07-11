@@ -1,9 +1,9 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Core.Models;
-using static RevitUiController.Core.AutomationHelper;
+using UiController.Core.Models;
+using static UiController.Core.AutomationHelper;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class ClickCommand : ICommand
 {

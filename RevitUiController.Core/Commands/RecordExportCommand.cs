@@ -1,10 +1,10 @@
 using System.IO;
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class RecordExportCommand : ICommand
 {

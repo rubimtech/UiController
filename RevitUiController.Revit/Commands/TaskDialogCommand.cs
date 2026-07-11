@@ -1,8 +1,8 @@
-using RevitUiController.Core;
+using UiController.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Core.Models;
-using static RevitUiController.Core.AutomationHelper;
+using UiController.Core.Models;
+using static UiController.Core.AutomationHelper;
 
 namespace RevitUiController.Revit.Commands;
 

@@ -1,8 +1,8 @@
-using RevitUiController.Core;
+using UiController.Core;
 using System.IO;
 using System.Text.Json;
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
 namespace RevitUiController.Revit.Commands;
 

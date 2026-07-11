@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class GenericLauncher : IApplicationLauncher
 {

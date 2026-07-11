@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class AutomationHelper
 {

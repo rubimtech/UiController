@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class UiMapEntry
 {

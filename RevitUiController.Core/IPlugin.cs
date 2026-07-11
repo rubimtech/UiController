@@ -1,4 +1,4 @@
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public interface IPlugin
 {

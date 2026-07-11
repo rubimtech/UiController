@@ -1,8 +1,8 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using static RevitUiController.Core.AutomationHelper;
+using static UiController.Core.AutomationHelper;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class SafetyGuard
 {

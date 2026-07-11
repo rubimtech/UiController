@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class OutputFormatter
 {

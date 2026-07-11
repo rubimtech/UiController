@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hWnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);

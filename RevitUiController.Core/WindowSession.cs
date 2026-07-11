@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using FlaUI.UIA3;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class WindowSession : IDisposable
 {

@@ -2,7 +2,7 @@ using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class CompositeAutomationProvider : IAutomationProvider
 {

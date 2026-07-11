@@ -1,4 +1,4 @@
-namespace RevitUiController.Core.Services;
+namespace UiController.Core.Services;
 
 public class LoggingServiceWrapper : ILoggingService
 {

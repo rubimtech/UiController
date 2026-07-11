@@ -1,8 +1,8 @@
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Core.Models;
+using UiController.Core.Models;
 using System.Threading;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class Win32ClickCommand : ICommand
 {
@@ -62,7 +62,7 @@ public class Win32ClickCommand : ICommand
 public class Win32EnumCommand : ICommand
 {
     public string Name => "win32-enum";
-    public string Description => "Enumerate Win32 child windows of Revit main window";
+    public string Description => "Enumerate Win32 child windows";
     public string Usage => "win32-enum";
 
     public Task<int> ExecuteAsync(AutomationElement window, string[] args, CancellationToken ct = default)

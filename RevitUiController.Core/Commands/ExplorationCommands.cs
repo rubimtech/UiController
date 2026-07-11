@@ -2,16 +2,16 @@ using System.IO;
 using System.Text;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Core.Models;
-using static RevitUiController.Core.AutomationHelper;
-using static RevitUiController.Core.OutputFormatter;
+using UiController.Core.Models;
+using static UiController.Core.AutomationHelper;
+using static UiController.Core.OutputFormatter;
 
-namespace RevitUiController.Core.Commands;
+namespace UiController.Core.Commands;
 
 public class ListWindowsCommand : ICommand
 {
     public string Name => "list-windows";
-    public string Description => "List all Revit windows/dialogs";
+    public string Description => "List all windows/dialogs";
     public string Usage => "list-windows (lw)";
 
     public Task<int> ExecuteAsync(AutomationElement window, string[] args, CancellationToken ct = default)
@@ -101,7 +101,7 @@ public class FindCommand : ICommand
 public class InfoCommand : ICommand
 {
     public string Name => "info";
-    public string Description => "Show Revit window info";
+    public string Description => "Show window info";
     public string Usage => "info";
 
     public Task<int> ExecuteAsync(AutomationElement window, string[] args, CancellationToken ct = default)

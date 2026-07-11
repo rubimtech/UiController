@@ -2,7 +2,7 @@ using System.Diagnostics;
 using FlaUI.Core.AutomationElements;
 using FlaUI.UIA3;
 
-namespace RevitUiController.Core.Services;
+namespace UiController.Core.Services;
 
 public class AutomationService : IAutomationService
 {

@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using FlaUI.UIA3;
 
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public class WinAppDriverClient : IDisposable
 {

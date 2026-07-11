@@ -1,4 +1,4 @@
-namespace RevitUiController.Core;
+namespace UiController.Core;
 
 public static class SafeExtensions
 {
