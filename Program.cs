@@ -175,7 +175,7 @@ public static class Program
         Register(new SessionSwitchCommand());
 
         if (UiMap.TryLoadDefault() && Verbosity == "full")
-            Console.Error.WriteLine($"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
+            LoggingService.Info("Program", $"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
     }
 
     private static void Register(ICommand cmd)
@@ -252,7 +252,7 @@ public static class Program
             {
                 UiMap.TryLoadDefault();
                 if (UiMap.IsLoaded && Verbosity != "minimal")
-                    Console.Error.WriteLine($"[uimap] auto-loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
+                    LoggingService.Info("Program", $"[uimap] auto-loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
             }
 
             SessionContext.ActiveHwnd = session.Process?.MainWindowHandle.ToInt64();
@@ -264,36 +264,54 @@ public static class Program
             {
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
-                var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray(), Cts.Token);
-
-                if (EventService != null) { EventService.Dispose(); EventService = null; }
-
-                try { LastOutput = Console.Out?.ToString(); } catch (Exception ex) { LoggingService.Warn("Safe", $"LastOutput: {ex.Message}"); }
-
-                if (SessionContext.IsActive && beforeState != null)
+                var originalOut = Console.Out;
+                using var outputWriter = new StringWriter();
+                Console.SetOut(outputWriter);
+                try
                 {
-                    var afterState = OutputFormatter.CaptureState(session.MainWindow);
-                    var diff = OutputFormatter.ComputeDiff(beforeState, afterState);
-                    foreach (var d in diff.NewDialogs)
-                        SessionContext.PushDialog(d);
-                    foreach (var _ in diff.ClosedDialogs)
-                        SessionContext.PopDialog();
+                    var exitCode = await cmd.ExecuteAsync(session.MainWindow, cleanArgs.Skip(1).ToArray(), Cts.Token);
+
+                    if (EventService != null) { EventService.Dispose(); EventService = null; }
+
+                    try { LastOutput = outputWriter.ToString(); } catch (Exception ex) { LoggingService.Warn("Safe", $"LastOutput: {ex.Message}"); }
+
+                    if (SessionContext.IsActive && beforeState != null)
+                    {
+                        var afterState = OutputFormatter.CaptureState(session.MainWindow);
+                        var diff = OutputFormatter.ComputeDiff(beforeState, afterState);
+                        foreach (var d in diff.NewDialogs)
+                            SessionContext.PushDialog(d);
+                        foreach (var _ in diff.ClosedDialogs)
+                            SessionContext.PopDialog();
+                    }
+                    if (exitCode == 0 && RecorderService.IsRecording && cmd.Name != "record-start" && cmd.Name != "record-stop")
+                    {
+                        RecorderService.Record($"{cmdName} {string.Join(" ", cleanArgs.Skip(1))}");
+                    }
+                    if (exitCode != 0 && !IsScreenshot)
+                    {
+                        var b64 = ScreenshotHelper.CaptureWindow(session.MainWindow);
+                        if (b64 != null)
+                        {
+                            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                            var dir = Path.Combine(Directory.GetCurrentDirectory(), "screenshots");
+                            Directory.CreateDirectory(dir);
+                            var filePath = Path.Combine(dir, $"error_{timestamp}.png");
+                            var bytes = Convert.FromBase64String(b64);
+                            File.WriteAllBytes(filePath, bytes);
+                            LoggingService.Info("Program", $"[AUTO-SCREENSHOT] {filePath}");
+                        }
+                    }
+                    return exitCode;
                 }
-                if (exitCode == 0 && RecorderService.IsRecording && cmd.Name != "record-start" && cmd.Name != "record-stop")
+                finally
                 {
-                    RecorderService.Record($"{cmdName} {string.Join(" ", cleanArgs.Skip(1))}");
+                    Console.SetOut(originalOut);
                 }
-                if (exitCode != 0 && !IsScreenshot)
-                {
-                    var ss = ScreenshotHelper.CaptureWindow(session.MainWindow);
-                    if (ss != null)
-                        Console.Error.WriteLine($"[AUTO-SCREENSHOT] data:image/png;base64,{ss}");
-                }
-                return exitCode;
             }
         }
 
-        Console.Error.WriteLine($"Unknown command: {cmdName}");
+        LoggingService.Error("Program", $"Unknown command: {cmdName}");
         PrintHelp();
         return 1;
     }
@@ -322,7 +340,10 @@ public static class Program
             else if (args[i] == "--non-interactive")
                 SafetyGuard.IsNonInteractive = true;
             else if (args[i] == "--uia-only")
+            {
                 IsUiaOnly = true;
+                WadClient = new WinAppDriverClient();
+            }
             else
                 result.Add(args[i]);
         }
@@ -343,7 +364,7 @@ public static class Program
         }
         else
         {
-            Console.Error.WriteLine($"Unknown command: {commandName}. Use --help to list all commands.");
+            LoggingService.Error("Program", $"Unknown command: {commandName}. Use --help to list all commands.");
         }
     }
 
@@ -463,9 +484,6 @@ Commands (Revit-focused, work with --process-name or --pid):
   process-list                          List running Revit processes
   process-info                          Show connected Revit process details
   ai-find <query> [--type <ct>]         Multi-strategy intelligent element search
-  cv-match <template.png> [--region]    Find template image via OpenCV MatchTemplate
-  cv-click <template.png>               Find template and click on match
-  cv-templates [filter]                 List available template images
   llm-find <description> [--provider <p>]  Find UI element via LLM Vision (screenshot + AI)
   llm-click <description> [--provider <p>]  Find and click via LLM Vision
   info                                  Show Revit window info
