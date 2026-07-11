@@ -106,9 +106,11 @@ public static class Program
         Register(new ScriptDiffCommand());
         Register(new HighlightCommand());
         Register(new HighlightClearCommand());
+#pragma warning disable RevitApi
         Register(new RevitApiCommand());
         Register(new RevitApiSelectCommand());
         Register(new RevitApiGetCommand());
+#pragma warning restore RevitApi
         Register(new StatusBarCommand());
         Register(new WaitProgressCommand());
         Register(new WadConnectCommand());
