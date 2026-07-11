@@ -91,6 +91,46 @@ public class WinAppDriverClient : IDisposable
         catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver ClickAt: {ex.Message}"); return false; }
     }
 
+    public bool Drag(int x1, int y1, int x2, int y2, int steps = 10)
+    {
+        if (_sessionId == null) return false;
+        try
+        {
+            var actionsList = new List<object>
+            {
+                new { type = "pointerMove", x = x1, y = y1, origin = "viewport" },
+                new { type = "pointerDown", button = 0 },
+                new { type = "pause", duration = 50 }
+            };
+
+            for (int i = 1; i <= steps; i++)
+            {
+                var x = x1 + (x2 - x1) * i / steps;
+                var y = y1 + (y2 - y1) * i / steps;
+                actionsList.Add(new { type = "pointerMove", x, y, origin = "viewport", duration = 20 });
+            }
+
+            actionsList.Add(new { type = "pointerUp", button = 0 });
+
+            var actions = new[]
+            {
+                new
+                {
+                    type = "pointer",
+                    id = "mouse",
+                    parameters = new { pointerType = "mouse" },
+                    actions = actionsList
+                }
+            };
+
+            var json = JsonSerializer.Serialize(actions, JsonOpts);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = _client.PostAsync($"{BaseUrl}/wd/hub/session/{_sessionId}/actions", content).GetAwaiter().GetResult();
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex) { LoggingService.Warn("Safe", $"WinAppDriver Drag: {ex.Message}"); return false; }
+    }
+
     public string? FindElement(string usingMethod, string value)
     {
         if (_sessionId == null) return null;
