@@ -116,23 +116,6 @@ public static class MouseControl
 
         LoggingService.Error("MouseControl", "ClickAtUia: no method available");
     }
-            }
-        }
-        catch (Exception ex)
-        {
-            LoggingService.Warn("Safe", $"ClickAtUia InvokePattern: {ex.Message}");
-        }
-
-        var wad = Program.WadClient;
-        if (wad != null && wad.IsConnected)
-        {
-            wad.ClickAt(x, y);
-            await Task.Delay(30, ct);
-            return;
-        }
-
-        LoggingService.Error("MouseControl", "ClickAtUia: no UIA automation or WinAppDriver available");
-    }
 
     public static async Task ClickElement(AutomationElement element, CancellationToken ct = default)
     {

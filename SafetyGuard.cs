@@ -8,11 +8,16 @@ namespace RevitUiController;
 
 public static class SafetyGuard
 {
+    private static readonly HashSet<string> DestructiveCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "click", "safe-click", "ribbon", "revit-api", "revit-select",
+        "win32-click", "canvas-click",
+    };
+
     private static readonly HashSet<string> DestructivePatterns = new(StringComparer.OrdinalIgnoreCase)
     {
         "delete", "purge", "overwrite", "remove", "erase",
-        "удалить", "очистить", "purgeunused", "deletewall",
-        "deleteelement", "removeelement"
+        "удалить", "очистить", "purgeunused",
     };
 
     private static readonly HashSet<string> AllowedDialogPatterns = new(StringComparer.OrdinalIgnoreCase)
@@ -23,6 +28,8 @@ public static class SafetyGuard
 
     public static bool IsDestructive(string commandName, string[] args)
     {
+        if (DestructiveCommands.Contains(commandName))
+            return true;
         var combined = commandName + " " + string.Join(" ", args);
         return DestructivePatterns.Any(p => combined.Contains(p, StringComparison.OrdinalIgnoreCase));
     }

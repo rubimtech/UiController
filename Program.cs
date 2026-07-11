@@ -264,6 +264,13 @@ public static class Program
             {
                 var beforeState = SessionContext.IsActive ? OutputFormatter.CaptureState(session.MainWindow) : null;
 
+                var cmdArgs = cleanArgs.Skip(1).ToArray();
+                if (SafetyGuard.IsDestructive(cmdName, cmdArgs)
+                    && !SafetyGuard.ConfirmDestructiveAction($"{cmdName} {string.Join(" ", cmdArgs)}"))
+                {
+                    return 0;
+                }
+
                 var originalOut = Console.Out;
                 using var outputWriter = new StringWriter();
                 Console.SetOut(outputWriter);

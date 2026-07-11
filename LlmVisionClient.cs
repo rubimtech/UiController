@@ -57,6 +57,11 @@ public static class LlmVisionClient
 
     private static string GetEnv(string name) => Environment.GetEnvironmentVariable(name) ?? "";
 
+    private static string? GetDefaultModel(string providerName)
+    {
+        return _providers.FirstOrDefault(p => p.Name == providerName)?.DefaultModel;
+    }
+
     public static List<LlmProviderInfo> GetAvailableProviders() => _providers.ToList();
 
     public static string? ResolveProvider(string? name)
@@ -84,6 +89,10 @@ public static class LlmVisionClient
 
         try
         {
+            var logModel = model ?? GetDefaultModel(resolvedProvider);
+            LoggingService.Info("LlmVisionClient",
+                $"[LLM] Sending screenshot to {resolvedProvider}/{logModel}");
+
             var (content, usedProvider, usedModel) = resolvedProvider switch
             {
                 "routerai" => await CallRouterAIAsync(description, base64Image, model, cts.Token),
