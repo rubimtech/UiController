@@ -69,6 +69,7 @@ dotnet run -- <command> [args] [--flags]
 | `--non-interactive` | CI-режим: все деструктивные действия (click, ribbon, revit-api, win32-click, key-combo, type-text и команды с ключевыми словами delete/purge/remove/overwrite) автоматически отклоняются без промпта |
 | `--uia-only` | UIA-only режим (без GDI/mouse_event для RDP/headless). Автоматически создаёт WinAppDriver-клиент |
 | `--daemon` | Запустить демон (persistent-режим) |
+| `--wv-setup` | Установить registry-ключ для WebView2 remote debugging (Chrome DevTools Protocol) |
 
 ---
 
@@ -277,6 +278,11 @@ wait-for <title> [timeout]            # Дождаться появления д
 wait-close <title> [timeout]          # Дождаться закрытия диалога
 wait-element <name> [timeout]         # Дождаться появления элемента
 wait-progress [timeout]               # Дождаться завершения ProgressBar
+
+retry-click <name> [--attempts N]    # Клик с экспоненциальным retry (N попыток, задержка Ms)
+  [--delay Ms]
+retry-dialog <title> [--attempts N]  # Дождаться диалога с экспоненциальным retry
+  [--delay Ms]
 ```
 
 ### ✅ Assertions
@@ -369,6 +375,9 @@ script-log (slog) [--file <p>] [--last N] # Git log для скриптов
 script-diff (sdiff) [--file <p>] [--commit <h>]  # Git diff для скриптов
 record-video [--fps 5] [--quality]    # Запись экрана через FFmpeg (gdigrab)
 record-video-stop                     # Остановить запись, сохранить .mp4 в screenshots/
+record-export --xunit <file.rvs>      # Экспорт .rvs скрипта в xUnit C# тест
+record-export --gherkin <file.rvs>    # Экспорт .rvs скрипта в Gherkin (.feature)
+record-export --python <file.rvs>     # Экспорт .rvs скрипта в Python тест
 ```
 
 ### 🗺️ UI Map (Page Object Model)
@@ -488,6 +497,10 @@ highlight-clear                       # Снять подсветку
 cache-clear                           # Очистить кэш элементов
 cache-stats                           # Статистика кэша
 cached-find <name>                    # Поиск с кэшем (TTL 5s)
+
+allure-setup [--output <dir>]         # Инициализировать Allure reporting
+allure-report [--input <dir>]         # Сгенерировать Allure отчёт
+  [--output <dir>]
 ```
 
 ---
