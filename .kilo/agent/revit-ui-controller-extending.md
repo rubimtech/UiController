@@ -8,16 +8,16 @@
 | Revit-specific commands | `RevitUiController.Revit/Commands/` |
 | Service interface | `RevitUiController.Core/Services/I*.cs` |
 | Service implementation | `RevitUiController.Core/Services/*.cs` |
-| Plugin (IPlugin) | Separate DLL → `Host/Plugins/` |
+| Plugin (IPlugin) | Separate DLL → `Host/Plugins/` (dir may not exist — code handles gracefully) |
 | Profile (IApplicationProfile) | `RevitUiController.Revit/` or any project |
-| Launcher (IApplicationLauncher) | Any project |
+| Launcher (IApplicationLauncher) | Any project. ⚠️ RegisterLauncher() in Host/Program.cs is defined but NEVER called |
 | Provider (IAutomationProvider) | `RevitUiController.Core/` or any project |
+| MCP tool | `RevitUiController.McpServer/RevitUiTools.cs` — add `[McpServerTool]` method |
+| Legacy command | `RevitUiController.csproj/Commands/` (root project, flat arch, no DI) |
 
 ## How to Add a New Command
 
 ### Create command file in `Core/Commands/` (generic) or `Revit/Commands/` (Revit-specific)
-
-Namespace: `UiController.Core.Commands` or `RevitUiController.Revit.Commands`
 
 ```csharp
 using FlaUI.Core.AutomationElements;
@@ -60,6 +60,7 @@ Registry.RegisterType(typeof(MyNewCommand));
 // or register alias:
 Registry.RegisterAlias("mc", "my-command");
 ```
+⚠️ Avoid conflicts: `ps` is already used for both `process-list` and PropertySheet.
 
 ### UiCommandBase Helper Methods
 | Method | Purpose |
@@ -68,6 +69,7 @@ Registry.RegisterAlias("mc", "my-command");
 | `RequireArgs(args, min)` | Throw if not enough args |
 | `GetFlag<T>(args, flag, default)` | Parse typed flag value from args |
 | `HasFlag(args, flag)` | Check if flag is present |
+| `BuildElementNotFoundError(name, root)` | Returns `SelfDescribingError` with suggestions |
 
 ## How to Add a Service
 
@@ -116,6 +118,7 @@ public class MyPlugin : IPlugin
 ```
 RevitUiController.Host/bin/Debug/net10.0-windows/Plugins/MyPlugin.dll
 ```
+Note: `Host/Plugins/` directory may not exist in repo — code handles gracefully.
 
 Plugin DLLs are auto-loaded at startup.
 
@@ -129,6 +132,12 @@ profiles:
     displayName: My Application
     executablePaths:
       - "C:\\Program Files\\MyApp\\MyApp.exe"
+    configDirectory: "%LOCALAPPDATA%/MyApp/UiController/"
+    uiMap: uimap.yaml
+    scriptsDir: scripts
+    templatesDir: templates
+    knownYears: [2025]
+    llmPrompt: "Look at this screenshot of MyApp."
 ```
 Usage: `--profile myapp`
 
@@ -140,7 +149,15 @@ public class MyAppProfile : IApplicationProfile
     public string ProcessName => "MyApp";
     public string[] ExecutablePaths => ["C:\\Program Files\\MyApp\\MyApp.exe"];
     public string? PipeName => null;
-    // ...
+    public string? ConfigDirectory => null;
+    public string? UiMapFileName => null;
+    public string? LocaleFileName => null;
+    public string? TemplatesDirectory => null;
+    public string? ScriptsDirectory => null;
+    public int[] KnownVersions => [];
+    public string DetectVersionFromTitle(string title) => "unknown";
+    public string? DetectVersionFromFileVersion() => null;
+    public string BuildLlmSystemPrompt() => "Default prompt";
 }
 ```
 Then use `--profile MyApp` or set `CoreSettings.CurrentProfile = new MyAppProfile()`.
@@ -161,6 +178,26 @@ public class MyProvider : IAutomationProvider
 }
 ```
 Register in `Host/Program.cs` `CreateAutomationProvider()` method.
+
+## How to Add an MCP Tool
+
+In `RevitUiController.McpServer/RevitUiTools.cs`:
+
+```csharp
+[McpServerTool, Description("Description of the tool")]
+public string revit_my_tool(
+    [Description("First parameter")] string param1,
+    [Description("Optional parameter")] int? param2 = null)
+{
+    return _bridge.FormatResponse(_bridge.SendAndDeserialize(new DaemonRequest
+    {
+        Command = "some-command",
+        Args = new List<string> { param1 }
+    }));
+}
+```
+
+The class uses DI-injected `DaemonBridge` which wraps `DaemonClient` to communicate with the daemon.
 
 ## AutomationHelper Key Methods
 | Method | Purpose |
@@ -198,6 +235,7 @@ dotnet test tools\RevitUiController.Tests
 - **Use `LoggingService.Warn(context, message)`** for non-fatal errors
 - **Extend `UiCommandBase`** rather than raw `ICommand` for automatic state diff
 - **Check `CoreSettings.IsUiaOnly`** if you use mouse/GDI and need RDP support
+- **For MCP**: add `[McpServerTool]` attribute, inject `DaemonBridge`, use `DaemonRequest` with all 28 fields
 
 ## Configuration Files
 | File | Location | Format |

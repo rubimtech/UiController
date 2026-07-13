@@ -3,8 +3,8 @@
 ## Project Info
 - **Framework**: .NET 10 (`net10.0-windows`)
 - **Language**: C# (nullable enabled, implicit usings)
-- **Solution**: 5 projects under `tools/RevitUiController/`
-- **Dependencies**: FlaUI.UIA3, OpenCvSharp4, YamlDotNet, WinForms, MS.DI
+- **Solution**: 6 projects under `tools/RevitUiController/` (1 legacy + 5 new)
+- **Dependencies**: FlaUI.UIA3, OpenCvSharp4, YamlDotNet, WinForms, MS.DI, Microsoft.Playwright (root only), ModelContextProtocol (McpServer)
 - **Platform**: Windows x64 only
 
 ## Build Commands
@@ -16,14 +16,22 @@ dotnet restore tools\RevitUiController
 dotnet build tools\RevitUiController -c Debug
 
 # Build individual projects
+dotnet build tools\RevitUiController\RevitUiController.csproj -c Debug      # Legacy root
 dotnet build tools\RevitUiController\RevitUiController.Core -c Debug
 dotnet build tools\RevitUiController\RevitUiController.Revit -c Debug
-dotnet build tools\RevitUiController\RevitUiController.Host -c Release
+dotnet build tools\RevitUiController\RevitUiController.Host -c Release      # NEW: DI-based CLI
 dotnet build tools\RevitUiController\RevitUiController.Daemon -c Release
 dotnet build tools\RevitUiController\RevitUiController.McpServer -c Release
 ```
 
-## Run Commands (Host — main CLI)
+## Legacy Root Run (flat arch — no DI)
+```powershell
+dotnet run --project tools\RevitUiController\RevitUiController.csproj -- state --pretty
+dotnet run --project tools\RevitUiController\RevitUiController.csproj -- ribbon Wall Architecture
+```
+Legacy root includes WebView2 commands (`wv-*`), fallback chain, and 75 commands not in new arch.
+
+## Run Commands (Host — NEW DI-based CLI)
 
 ```powershell
 # Default: connect to Revit process, run command
@@ -56,6 +64,9 @@ dotnet run --project tools\RevitUiController\RevitUiController.Host -- --provide
 # Start daemon (background named pipe server)
 dotnet run --project tools\RevitUiController\RevitUiController.Daemon -- --daemon
 
+# With auto-screenshot on error (not documented in other sections)
+dotnet run --project tools\RevitUiController\RevitUiController.Daemon -- --daemon --auto-screenshot
+
 # Interactive mode
 dotnet run --project tools\RevitUiController\RevitUiController.Daemon
 
@@ -67,12 +78,17 @@ dotnet run --project tools\RevitUiController\RevitUiController.Daemon -- --pipe 
 
 # Daemon batch commands
 dotnet run --project tools\RevitUiController\RevitUiController.Daemon -- batch '{"commands":[{"command":"click","args":["OK"]}]}'
+
+# Daemon protocol: __undo, __events, __watch
+dotnet run --project tools\RevitUiController\RevitUiController.Daemon -- __undo --action status
 ```
 
 ## MCP Server Run
 ```powershell
 dotnet run --project tools\RevitUiController\RevitUiController.McpServer
 # Requires: RevitUiController.Daemon running with --daemon flag
+# Uses DaemonBridge to communicate with daemon (NO direct connection to Host CLI)
+# Supports --pipe <name> flag (default: RevitUiController)
 ```
 
 ## Global Flags (Host)
@@ -97,10 +113,19 @@ Location: `RevitUiController.Host/config.yaml` or `%APPDATA%/UiController/config
 profiles:
   revit:
     processName: Revit
+    displayName: Autodesk Revit          # Human-readable name
     pipeName: ReVibe
     executablePaths:
       - "C:\\Program Files\\Autodesk\\Revit 2026\\Revit.exe"
+    configDirectory: "%LOCALAPPDATA%/ReVibe/UiController/"
+    uiMap: uimap.yaml
+    scriptsDir: scripts
+    templatesDir: templates
     knownYears: [2022, 2023, 2024, 2025, 2026, 2027]
+    llmPrompt: "Look at this screenshot of Autodesk Revit."
+  notepad:
+    processName: notepad
+    displayName: Windows Notepad
 defaults:
   profile: revit
   connectTimeout: 30
@@ -112,13 +137,20 @@ defaults:
 dotnet test tools\RevitUiController.Tests
 ```
 
+## Known Issues
+- `IApplicationLauncher.RegisterLauncher()` defined in Host/Program.cs but never called — launcher not registered in DI
+- `ps` alias registered for both `process-list` and PropertySheet commands — conflict
+- `allure-open` command documented but does NOT exist in code (only `allure-setup`, `allure-report`)
+- WebView2 commands (`wv-*`) exist only in legacy root project, NOT in Core/Commands/
+- Host/Plugins/ directory may not exist — code handles gracefully
+
 ## Debug Tips
 - Use `--pretty` for human-readable JSON output
 - Use `--verbosity full` for maximum detail
 - Auto-screenshot on error (always, unless `--screenshot` is set)
 - Ctrl+C cancels any running command via CancellationToken
 - Use `dry-run <script.rvs>` to simulate a script without real clicks
-- Deprecated commands show migration hints (e.g. `revit-api` → `pipe-api`)
+- Deprecated commands show migration hints (e.g. `revit-api` → `pipe-api`, `revit-instances` → `app-instances --profile revit`, `revit-restart` → `app-restart --profile revit`)
 
 ## Output Format
 All commands return JSON (`CommandResult`):

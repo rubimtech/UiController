@@ -220,6 +220,7 @@ public static class Program
         return Commands.TryGetValue(lower, out var cmd) ? cmd : null;
     }
 
+    [STAThread]
     public static async Task<int> Main(string[] args)
     {
         Console.CancelKeyPress += (_, e) =>
@@ -357,6 +358,9 @@ public static class Program
                 finally
                 {
                     Console.SetOut(originalOut);
+                    var captured = outputWriter.ToString();
+                    if (!string.IsNullOrEmpty(captured))
+                        originalOut.Write(captured);
                 }
             }
         }

@@ -1,5 +1,7 @@
 # RevitUiController: Command Reference
 
+> ⚠️ **Two architectures**: 75 legacy commands (root `RevitUiController.csproj`, flat static, includes `wv-*`) + 70+ new DI-based commands (`Core/Commands/` 55 + `Revit/Commands/` 15). This doc covers the **new architecture** unless noted.
+
 ## Desktop Window Management
 | Command | Description |
 |---------|-------------|
@@ -7,7 +9,7 @@
 | `active` | Show active/foreground window + monitor info |
 | `focus <title> [--pid N\|--hwnd <h>]` | Bring window to foreground |
 | `monitors` | List monitors (resolution, DPI, work area) |
-| `process-list (ps) [--filter <name>]` | List all running processes |
+| `process-list (pl) [--filter <name>]` | List all running processes. ⚠️ `ps` alias conflicts with PropertySheet commands |
 
 ## UI Exploration & Pattern Tools
 | Command | Description |
@@ -26,7 +28,6 @@
 | `grid-read (gr) <name> [--rows N]` | Read DataGrid via GridPattern |
 | `list-items (li) <name> [--max N]` | Read ListBox/ListView items |
 | `table-read (tr) <name> [--rows N]` | Read Table with column headers |
-| `window-screenshot (ws) [--output path.png]` | Screenshot of connected window |
 
 ## Navigation & Interaction
 | Command | Description |
@@ -75,7 +76,7 @@
 | `wait-close <title> [timeout]` | Wait for dialog to close |
 | `wait-element <name> [timeout]` | Wait for element to appear |
 | `wait-progress [timeout]` | Wait for progress bar to complete |
-| `watch <cmd> --until <cond> [--interval] [--timeout]` | Poll command until condition met |
+| `watch <cmd> --until <cond> [--interval] [--timeout]` | Poll command until condition met. Conditions: found, gone, enabled, disabled, text:substring |
 
 ## Keyboard & Clipboard
 | Command | Description |
@@ -194,21 +195,20 @@
 ## Daemon Management
 | Command | Description |
 |---------|-------------|
-| `daemon [--start\|--stop\|--status] [--pipe <name>] [--profile <name>]` | Start/interact with persistent daemon |
+| `daemon [--start\|--stop\|--status] [--pipe <name>] [--profile <name>]` | Start/interact with persistent daemon. Also supports `--auto-screenshot` flag |
 
 ## Batch Commands
 | Command | Description |
 |---------|-------------|
-| `batch <json-array> [--pretty]` | Execute multiple commands from JSON array, return array of results |
+| `batch <json-array> [--pretty]` | Execute multiple commands from JSON array, return array of results. Each command supports: command, args, onError (stop/skip), if (previous_success/previous_failed), onlyIf (dialog/exists/element/enabled) |
 
 ## Allure Reporting
 | Command | Description |
 |---------|-------------|
 | `allure-setup [--output <dir>]` | Initialize Allure reporting for test results |
-| `allure-generate [--output <dir>] [--history <dir>]` | Generate Allure report from results |
-| `allure-open [--port <port>] [--report <dir>]` | Open Allure report in browser |
+| `allure-report [--input <dir>] [--output <dir>]` | Generate Allure report from results |
 
-## WebView2 Commands
+## WebView2 Commands (legacy root project only)
 | Command | Description |
 |---------|-------------|
 | `wv-connect [--port <port>] [--timeout <sec>]` | Connect to WebView2 via CDP |

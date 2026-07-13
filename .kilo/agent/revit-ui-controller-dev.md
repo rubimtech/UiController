@@ -8,38 +8,46 @@ RevitUiController — CLI-инструмент для автоматизации
 ## Стек
 - **Framework**: .NET 10 (`net10.0-windows`)
 - **Language**: C# (nullable enabled, implicit usings)
-- **Решение**: 5 проектов (Core, Revit, Host, Daemon, McpServer)
-- **DI**: Microsoft.Extensions.DependencyInjection
-- **Key deps**: FlaUI.UIA3, OpenCvSharp4, YamlDotNet, WinForms, MCP SDK
+- **Решение**: 6 проектов (1 legacy root + Core, Revit, Host, Daemon, McpServer)
+- **DI**: Microsoft.Extensions.DependencyInjection (только Host, Daemon, McpServer)
+- **Key deps**: FlaUI.UIA3, OpenCvSharp4, YamlDotNet, WinForms, MCP SDK, Microsoft.Playwright (legacy root)
 - **Platform**: Windows x64 only
 - **Tests**: xUnit (`RevitUiController.Tests`)
 
 ## Архитектура
 ```
-Solution: RevitUiController (5 projects)
-  Core       — generic UI automation, no Revit dependency
-  Revit      — Revit-specific profiles, launcher, commands, pipe bridge
-  Host       — CLI entry point with DI, config, plugin loading
-  Daemon     — persistent named pipe server (background automation)
-  McpServer  — Model Context Protocol stdio server (AI tool integration)
+Solution: RevitUiController (6 projects)
+  Root (legacy) — flat static arch, no DI, 75 commands, includes WebView2 (wv-*)
+  Core          — generic UI automation, no Revit dependency
+  Revit         — Revit-specific profiles, launcher, commands, pipe bridge
+  Host          — NEW: CLI entry point with DI, config, plugin loading
+  Daemon        — persistent named pipe server (background automation)
+  McpServer     — Model Context Protocol stdio server (AI tool integration)
 
-Runtime:
+Runtime (new arch):
   Host → DI → Profile → Provider → WindowSession → Command
   Daemon ↔ Host / McpServer (named pipe)
+  MCP: Client → McpServer → DaemonBridge → Daemon DaemonServer (NO direct Host link)
+
+Legacy (root):
+  Root CLI → static Commands dict → Command (flat, no DI, no services)
 ```
 
 ## Референсы (загружать по необходимости)
-- `.kilo/agent/revit-ui-controller-architecture.md` — полная архитектура, все проекты, DI, профили, провайдеры, протоколы
-- `.kilo/agent/revit-ui-controller-build-run.md` — сборка, запуск (Host/Daemon/McpServer), флаги, конфиг, отладка
-- `.kilo/agent/revit-ui-controller-commands.md` — полный справочник команд (80+ команд, WebView2, Daemon, batch)
-- `.kilo/agent/revit-ui-controller-extending.md` — как добавить команду, плагин, профиль, провайдер, сервис
+- `.kilo/agent/revit-ui-controller-architecture.md` — полная архитектура, все проекты, DI, профили, провайдеры, протоколы, 28 полей DaemonRequest, MCP 33 tools
+- `.kilo/agent/revit-ui-controller-build-run.md` — сборка, запуск (Host/Daemon/McpServer + legacy root), флаги, конфиг, отладка, известные проблемы
+- `.kilo/agent/revit-ui-controller-commands.md` — полный справочник команд (70+ new + 75 legacy, WebView2, Daemon, batch)
+- `.kilo/agent/revit-ui-controller-extending.md` — как добавить команду, плагин, профиль, провайдер, сервис, MCP tool
 
 ## Команды сборки и запуска
 ```powershell
 # Build all
 dotnet build tools\RevitUiController -c Debug
 
-# Run Host (main CLI)
+# Legacy root (flat arch)
+dotnet run --project tools\RevitUiController\RevitUiController.csproj -- state --pretty
+
+# Run Host (NEW DI-based CLI)
 dotnet run --project tools\RevitUiController\RevitUiController.Host -- state --pretty
 dotnet run --project tools\RevitUiController\RevitUiController.Host -- ribbon Wall Architecture --pretty
 
@@ -72,19 +80,22 @@ dotnet test tools\RevitUiController.Tests
 | `RevitUiController.Revit/Commands/` | 15 Revit-specific commands |
 | `RevitUiController.Revit/RevitProfile.cs` | IApplicationProfile for Revit |
 | `RevitUiController.Revit/PipeBridgeClient.cs` | Named pipe client for Revit API |
+| `RevitUiController.McpServer/RevitUiTools.cs` | 33 MCP tool methods |
 
 ## Ключевые паттерны
-- **Command Pattern**: 70+ `ICommand`, auto-discovered via assembly scan
-- **DI**: `Microsoft.Extensions.DependencyInjection`, 22 service interfaces
+- **Command Pattern**: 70+ `ICommand` (Core 55 + Revit 15), auto-discovered via assembly scan (+ 75 legacy)
+- **DI**: `Microsoft.Extensions.DependencyInjection`, 22 service files (11 interfaces + 11 impls)
 - **Abstract Base**: `UiCommandBase` — boilerplate (state capture, diff, formatting)
 - **Strategy Pattern**: `AiFindCommand` (6 strategies), `CvMatchClient`, `LlmVisionClient` (4 providers)
 - **Profile Pattern**: `IApplicationProfile` — RevitProfile / GenericProfile / custom config
 - **Provider Pattern**: `IAutomationProvider` — UIA3 / WinAppDriver / Composite
-- **Plugin Pattern**: `IPlugin` — DLL loading from `Host/Plugins/`
-- **Daemon Protocol**: Named pipe, JSON line-delimited, bidirectional
+- **Plugin Pattern**: `IPlugin` — DLL loading from `Host/Plugins/` (dir may not exist)
+- **Daemon Protocol**: Named pipe, JSON line-delimited, 28 request fields
+- **MCP Bridge**: `DaemonBridge` wraps `DaemonClient` for McpServer communication
 - **Retry/Resilience**: `RetryPolicy` с exponential backoff
 - **Page Object Model**: `UiMap` — logical names → version-specific selectors
 - **Fallback layers**: FlaUI → Win32 → WinAppDriver → OpenCV → LLM Vision
+- **Legacy (root)**: Flat static, 75 commands, WebView2 (wv-*), ClickFallbackChain
 
 ## Правила разработки
 1. Код добавлять в соответствующий проект (Core/Revit/Host/Daemon/McpServer)
@@ -97,3 +108,10 @@ dotnet test tools\RevitUiController.Tests
 8. Новые generic команды — в `Core/Commands/`, Revit-специфичные — в `Revit/Commands/`
 9. Команды регистрируются через `CommandRegistry.Register<T>()` (assembly scan)
 10. Для сервисов — создать interface в `Core/Services/`, реализацию там же, зарегистрировать в Host DI
+
+## Известные проблемы
+- `RegisterLauncher()` в Host/Program.cs определён, но не вызывается — `IApplicationLauncher` не в DI
+- Алиас `ps` зарегистрирован и для `process-list`, и для PropertySheet — конфликт
+- `allure-open` в коде не существует (только `allure-setup`, `allure-report`)
+- WebView2 команды только в legacy root, не в Core/Commands/
+- Host/Plugins/ может не существовать — код обрабатывает gracefully
