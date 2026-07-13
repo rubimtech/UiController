@@ -3,6 +3,7 @@ namespace UiController.Core.Services;
 public class SessionContextService : ISessionContextService
 {
     public bool IsActive => SessionContext.IsActive;
+    public string? Name => SessionContext.Name;
     public string? ActiveDialog => SessionContext.ActiveDialog;
     public string? ActiveTab
     {
@@ -39,8 +40,9 @@ public class SessionContextService : ISessionContextService
         get => SessionContext.ActiveMonitorName;
         set => SessionContext.ActiveMonitorName = value;
     }
+    public IReadOnlyList<SessionCommandRecord> CommandHistory => SessionContext.CommandHistory;
 
-    public void Begin() => SessionContext.Begin();
+    public void Begin(string? name = null) => SessionContext.Begin(name);
     public void End() => SessionContext.End();
     public void PushDialog(string title) => SessionContext.PushDialog(title);
     public void PopDialog() => SessionContext.PopDialog();
@@ -48,4 +50,7 @@ public class SessionContextService : ISessionContextService
     public object? GetVariable(string name) => SessionContext.GetVariable(name);
     public void ResetDialogContext() => SessionContext.ResetDialogContext();
     public object Status() => SessionContext.Status();
+    public object FullStatus() => SessionContext.FullStatus();
+    public void RecordCommand(string command, object? args, bool success, double durationMs)
+        => SessionContext.RecordCommand(command, args, success, durationMs);
 }

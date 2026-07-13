@@ -1,9 +1,9 @@
 using System.Text;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Models;
-using static RevitUiController.AutomationHelper;
-using static RevitUiController.OutputFormatter;
+using UiController.Core.Models;
+using static UiController.Core.AutomationHelper;
+using static UiController.Core.OutputFormatter;
 
 namespace RevitUiController.Commands;
 

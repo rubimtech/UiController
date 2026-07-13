@@ -1,6 +1,6 @@
 using FlaUI.UIA3;
 using RevitUiController.Commands;
-using RevitUiController.Models;
+using UiController.Core.Models;
 
 namespace RevitUiController;
 
@@ -28,6 +28,7 @@ public static class Program
         ["sr"] = "screenshot-region",
         ["hr"] = "highlight-region",
         ["ri"] = "revit-instances",
+        ["wv-ls"] = "wv-list",
     };
 
     public static CancellationTokenSource Cts { get; } = new();
@@ -48,7 +49,20 @@ public static class Program
     public static WinAppDriverClient? WadClient { get; set; }
     public static UIA3Automation? Automation { get; set; }
     public static RevitInstanceManager InstanceManager { get; } = new();
-    public static ProgramOptions GlobalOptions => ProgramOptions.FromGlobalFlags();
+    public static ProgramOptions GlobalOptions => new()
+    {
+        IsPretty = IsPretty,
+        IsScreenshot = IsScreenshot,
+        Verbosity = Verbosity,
+        TargetPid = TargetPid,
+        ProcessName = ProcessName,
+        WindowTitle = WindowTitle,
+        UseActiveWindow = UseActiveWindow,
+        ConnectTimeoutSec = ConnectTimeoutSec,
+        IsNonInteractive = SafetyGuard.IsNonInteractive,
+        IsUiaOnly = IsUiaOnly,
+    };
+    public static WebView2Client? WebView2 { get; set; }
 
     static Program()
     {
@@ -176,6 +190,19 @@ public static class Program
         Register(new MultiExecCommand());
         Register(new SessionSwitchCommand());
 
+        Register(new WvConnectCommand());
+        Register(new WvClickCommand());
+        Register(new WvTypeCommand());
+        Register(new WvTextCommand());
+        Register(new WvWaitCommand());
+        Register(new WvEvalCommand());
+        Register(new WvUrlCommand());
+        Register(new WvScreenshotCommand());
+        Register(new WvListCommand());
+        Register(new BatchCommand());
+        Register(new DaemonCommand());
+        Register(new RevitUndoCommand());
+
         if (UiMap.TryLoadDefault() && Verbosity == "full")
             LoggingService.Info("Program", $"[uimap] loaded {UiMap.EntryCount} entries from {UiMap.CurrentPath}");
     }
@@ -201,7 +228,21 @@ public static class Program
             Cts.Cancel();
         };
 
+        if (args.Any(a => a == "--wv-setup"))
+        {
+            WebView2Client.SetupRegistry();
+            Console.WriteLine("WebView2 registry key set. Restart the Tauri app to apply.");
+            return 0;
+        }
+
         var cleanArgs = ParseGlobalFlags(args);
+
+        // If --daemon flag, start daemon mode immediately
+        if (args.Contains("--daemon"))
+        {
+            var daemonCmd = new Commands.DaemonCommand();
+            return await daemonCmd.ExecuteAsync(null!, ["--start"], Cts.Token);
+        }
 
         if (cleanArgs.Length == 0 || (cleanArgs.Length == 1 && (cleanArgs[0] == "--help" || cleanArgs[0] == "-h" || cleanArgs[0] == "help")))
         {
@@ -393,6 +434,11 @@ Global flags:
   --connect-timeout <sec>          Wait timeout for process (default: 30)
   --non-interactive                Auto-reject destructive actions without prompt
   --uia-only                       UIA-only mode (no GDI/mouse_event for RDP/headless)
+  --daemon                         Start persistent daemon mode (single process for multiple commands)
+ 
+Daemon & Batch:
+  daemon [--start|--stop|--status] Start/stop/check persistent daemon (named pipe server)
+  batch <json-array>               Execute multiple commands from JSON array, return array of results
  
 Desktop Window Management (any process):
   list-all (la) [--filter <txt>]        List ALL visible top-level windows on desktop

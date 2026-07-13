@@ -14,5 +14,22 @@
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="OpenCvSharp4" />
     <PackageReference Include="OpenCvSharp4.runtime.win" />
+    <PackageReference Include="Microsoft.Playwright" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="RevitUiController.Core\RevitUiController.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="UiController.Core" />
+    <Using Include="UiController.Core.Models" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="RevitUiController.Core\**\*.cs" />
+    <Compile Remove="RevitUiController.Daemon\**\*.cs" />
+    <Compile Remove="RevitUiController.Host\**\*.cs" />
+    <Compile Remove="RevitUiController.McpServer\**\*.cs" />
+    <Compile Remove="RevitUiController.Revit\**\*.cs" />
+    <Compile Remove="obj\**\*.cs" />
+    <Compile Remove="bin\**\*.cs" />
   </ItemGroup>
 </Project>

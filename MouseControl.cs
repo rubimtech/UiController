@@ -74,7 +74,7 @@ public static class MouseControl
             var automation = Program.Automation;
             if (automation != null)
             {
-                var element = automation.FromPoint(new Point(x, y));
+                var element = automation.FromPoint(new System.Drawing.Point(x, y));
                 if (element != null)
                 {
                     if (element.Patterns.Invoke.TryGetPattern(out var invokePattern))

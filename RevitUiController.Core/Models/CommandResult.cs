@@ -23,7 +23,9 @@ public class UiStateDiff
 
 public class SelfDescribingError
 {
-    public string Code { get; set; } = "";
+    public ErrorCode Code { get; set; } = ErrorCode.Unknown;
+    public string CodeString { get; set; } = "";
     public string Query { get; set; } = "";
     public List<string> Suggestions { get; set; } = new();
+    public List<string>? AvailableElements { get; set; }
 }

@@ -1,87 +1,146 @@
 # RevitUiController: Architecture & Patterns
 
-## High-level Architecture
+## Solution Structure (5 projects)
 
 ```
-CLI (dotnet run) → Program.cs (flags → session → command dispatch)
-  → DesktopWindowManager (window resolution)
-    → WindowSession (FlaUI UIA3 wrapper)
-      → ICommand.ExecuteAsync(window, args)
-        → AutomationHelper (FlaUI search/interaction)
-          → OutputFormatter (JSON response)
+RevitUiController/
+├── RevitUiController.Core/         # Core library — no Revit dependency
+│   ├── Commands/                   # Generic commands (55 commands)
+│   ├── Models/                     # CommandResult, ElementInfo, etc.
+│   ├── Services/                   # DI service interfaces & implementations (22 services)
+│   ├── Protocol/                   # DaemonProtocol (DaemonRequest/Response, DaemonClient)
+│   ├── ICommand.cs                 # Command interface
+│   ├── UiCommandBase.cs            # Abstract base with auto state-capture
+│   ├── CommandRegistry.cs          # Centralized command registry (type + instance)
+│   ├── IApplicationProfile.cs      # App profile interface
+│   ├── IApplicationLauncher.cs     # App launcher interface
+│   ├── IAutomationProvider.cs      # UIA provider abstraction
+│   ├── IPlugin.cs                  # Plugin interface
+│   ├── AutomationHelper.cs         # FlaUI search/interaction
+│   ├── WindowSession.cs            # FlaUI UIA3 wrapper
+│   ├── DesktopWindowManager.cs     # Window finding/switching
+│   ├── ConfigLoader.cs / ConfigModel.cs  # config.yaml support
+│   ├── CoreSettings.cs             # Global settings singleton
+│   └── UiMap.cs / LocaleMap.cs     # Page Object Model
+│
+├── RevitUiController.Revit/        # Revit-specific extensions
+│   ├── Commands/                   # Revit-specific commands (15)
+│   ├── RevitProfile.cs             # IApplicationProfile for Revit
+│   ├── RevitLauncher.cs            # IApplicationLauncher for Revit
+│   ├── RevitPlugin.cs              # Plugin registration
+│   ├── PipeBridgeClient.cs         # Named pipe to Revit API bridge
+│   └── RevitInstanceManager.cs     # Multi-instance management
+│
+├── RevitUiController.Host/         # CLI host (entry point)
+│   ├── Program.cs                  # DI setup, flag parsing, command dispatch
+│   ├── config.yaml                 # Profiles & defaults
+│   └── Plugins/                    # Plugin DLLs loaded at runtime
+│
+├── RevitUiController.Daemon/       # Background daemon server
+│   ├── Program.cs                  # Named pipe server + client CLI
+│   ├── DaemonServer.cs             # Persistent command execution server
+│   └── EventWatcherService.cs      # Dialog open/close event monitoring
+│
+└── RevitUiController.McpServer/    # MCP stdio server
+    └── Program.cs                  # Model Context Protocol tools
 ```
 
-## Key Files
+## Execution Flow
 
-### Core Infrastructure
-| File | Purpose |
-|------|---------|
-| `Program.cs` | CLI entry, flag parsing, command registration, session lifecycle |
-| `ICommand.cs` | Interface: `Name`, `Description`, `Usage`, `ExecuteAsync()` |
-| `UiCommandBase.cs` | Abstract base: auto state-capture, diff, error handling, `FindElement()`, `RequireArgs()`, `GetFlag()`, `HasFlag()` |
-| `WindowSession.cs` | Connect to ANY window via FlaUI UIA3 (`ConnectToProcess`, `ConnectByTitle`, `ConnectToActive`, `Resolve`) |
-| `DesktopWindowManager.cs` | Orchestrator: window finding, switching, monitors, ActiveWindowTracker |
-| `SessionContext.cs` | Stateful session: dialog stack, variables, active tab |
-
-### Search & Interaction
-| File | Purpose |
-|------|---------|
-| `AutomationHelper.cs` | `FindFirstEnabledVisible`, `SafeGetChildren`, `TryClick`, `SendTextSafe`, `FindFieldByLabel` |
-| `UiMap.cs` | YAML Page Object Model: load/save/resolve with version-specific selectors |
-| `LocaleMap.cs` | RU↔EN translation (YAML + hardcoded fallback) |
-| `ElementCache.cs` | 5s TTL element cache with auto-refresh |
-| `AiFindCommand.cs` | 6-strategy intelligent element search |
-| `Retry.cs` | `Retry.WaitFor*` polling + `RetryPolicy` with exponential backoff |
-
-### Fallback Layers
-| File | Purpose |
-|------|---------|
-| `Win32Helper.cs` | Win32 SendMessage/PostMessage fallback |
-| `WinAppDriverClient.cs` | WinAppDriver REST API client |
-| `CvMatchClient.cs` | OpenCV MatchTemplate (template image search) |
-| `LlmVisionClient.cs` | Multi-provider LLM Vision (RouterAI → OpenAI → Anthropic → Ollama) |
-| `MouseControl.cs` | DPI-aware mouse clicks, drag, scroll |
-
-### Output & Logging
-| File | Purpose |
-|------|---------|
-| `OutputFormatter.cs` | JSON formatting: `FormatResult`, `FormatError`, `CaptureState`, `ComputeDiff` |
-| `LoggingService.cs` | Structured file logging to `%LOCALAPPDATA%/ReVibe/UiController/logs/` |
-| `RecorderService.cs` | Record actions to `.rvs` script files |
-
-### Safety & Diagnostics
-| File | Purpose |
-|------|---------|
-| `SafetyGuard.cs` | Destructive action confirmation, warning dismissal |
-| `ScreenshotHelper.cs` | Screenshot capture (GDI BitBlt + WinAppDriver fallback) |
-| `HighlightHelper.cs` | Semi-transparent overlay for element highlighting |
-| `EventService.cs` | UIA event-driven automation (<100ms response) |
-
-### Revit Integration
-| File | Purpose |
-|------|---------|
-| `PipeBridgeClient.cs` | Named Pipe client (`\\.\pipe\ReVibe`) for Revit API bridge |
-| `RevitInstanceManager.cs` | Multi-instance Revit management |
-| `RevitVersionProfile.cs` | Version detection (2022-2027) |
-
-## Models (in `Models/`)
-- `CommandResult.cs` — standard JSON response (`Success`, `Error`, `Diff`, `Data`, `Screenshot`, `DurationMs`)
-- `ElementInfo.cs` — UI element data (`ControlType`, `Name`, `AutomationId`, `BoundingRect`, `Children`)
-- `ProgramOptions.cs` — immutable options record
-- `WindowInfo.cs` / `MonitorInfo.cs` / `WindowQuery.cs` — window/monitor metadata
-
-## Element Search Hierarchy
 ```
-1. FlaUI AutomationId match
-2. FlaUI Name contains + LocaleMap RU↔EN
-3. ai-find (6 strategies: name → locale → autoId → regex → sibling → tab-scoped)
-4. UiMap resolve (logical name → version-specific selectors)
-5. Mouse click by BoundingRect (DPI-aware coordinates)
-6. Win32 SendInput / PostMessage
-7. WinAppDriver REST API
-8. OpenCV MatchTemplate
-9. LLM Vision (RouterAI → OpenAI → Anthropic → Ollama)
+Runtime flow:
+  Host CLI → DI container → Profile → Provider → WindowSession → Command
+
+Daemon flow:
+  Daemon (named pipe) → Host CLI / MCP Server → DaemonServer → Command
+
+MCP flow:
+  MCP Client (stdio) → McpServer → DaemonClient → Daemon DaemonServer → Command
 ```
+
+## DI Container (Microsoft.Extensions.DependencyInjection)
+
+Registered in `RevitUiController.Host/Program.cs`:
+
+### Providers (IAutomationProvider)
+| Provider | Flag | Description |
+|----------|------|-------------|
+| `UIA3AutomationProvider` | `--provider uia3` (default) | FlaUI UIA3 |
+| `WinAppDriverProvider` | `--provider wad` | WinAppDriver REST API |
+| `CompositeAutomationProvider` | `--provider composite` | UIA3 + WAD fallback |
+
+### Service Interfaces (in `Services/`)
+| Interface | Implementation | Purpose |
+|-----------|---------------|---------|
+| `IAutomationService` | `AutomationService` | Session lifecycle |
+| `ILoggingService` | `LoggingServiceWrapper` | Structured logging |
+| `IScreenshotService` | `ScreenshotService` | Screenshot capture |
+| `IOutputFormatterService` | `OutputFormatterService` | JSON formatting |
+| `IUiMapService` | `UiMapService` | Page Object Model |
+| `ISafetyGuardService` | `SafetyGuardService` | Destructive action guard |
+| `IEventService` | `EventServiceWrapper` | UIA event-driven automation |
+| `IRecorderService` | `RecorderServiceWrapper` | Action recording |
+| `ISessionContextService` | `SessionContextService` | Session state |
+| `ICvMatchService` | `CvMatchService` | OpenCV MatchTemplate |
+| `ILlmVisionService` | `LlmVisionService` | LLM Vision |
+
+## Application Profiles
+
+```yaml
+# config.yaml
+profiles:
+  revit:
+    processName: Revit
+    pipeName: ReVibe
+    executablePaths: [...]
+    knownYears: [2022..2027]
+  notepad:
+    processName: notepad
+
+defaults:
+  profile: revit
+  connectTimeout: 30
+```
+
+- `IApplicationProfile` — process name, paths, pipe, versions, LLM prompt
+- `RevitProfile` — hardcoded Revit defaults
+- `GenericProfile` — any process by name
+- Custom profiles via `config.yaml`
+
+## Key Interfaces
+
+### IApplicationProfile
+`Name`, `ProcessName`, `ExecutablePaths`, `PipeName`, `ConfigDirectory`, `KnownVersions`, `DetectVersionFromTitle()`, `BuildLlmSystemPrompt()`
+
+### IApplicationLauncher
+`Launch()`, `FindRunning()`, `WaitForReady()`, `IsAlive()`
+
+### IAutomationProvider
+`GetDesktop()`, `FindFirst()`, `FindFirstEnabledVisible()`, `FindAllChildren()`, `FindActiveDialogs()`
+
+### IPlugin
+`Name`, `RegisterCommands(CommandRegistry)`
+
+### CommandRegistry
+`Register(ICommand)`, `Register<T>()`, `RegisterType(Type)`, `RegisterAlias()`, `GetCommand()`, `GetCommandType()`
+
+## Daemon Protocol (named pipe `\\.\pipe\RevitUiController`)
+
+Line-delimited JSON:
+```json
+{"command":"__connect","processName":"Revit"}
+{"command":"__ping"}
+{"command":"__shutdown"}
+{"command":"__batch","commands":[...]}
+{"command":"click","args":["OK"]}
+```
+
+Response: `{"success":true,"data":{...},"error":null}`
+
+## Plugin System
+- `IPlugin` interface with `RegisterCommands(CommandRegistry)`
+- DLLs in `Host/Plugins/` loaded at startup
+- RevitPlugin registers all Revit-specific commands
 
 ## LLM Vision Providers (auto-selection by priority)
 1. **RouterAI** — `ROUTERAI_API_KEY`, model `qwen/qwen-vl-max`
@@ -90,9 +149,11 @@ CLI (dotnet run) → Program.cs (flags → session → command dispatch)
 4. **Ollama** — local, model `llama3.2-vision`
 
 ## Key Patterns
-- **Command Pattern**: 70+ `ICommand` implementations registered in `Program.cs` static constructor
+- **Command Pattern**: 70+ `ICommand` implementations, auto-discovered via assembly scan
 - **Abstract Base**: `UiCommandBase` handles boilerplate (state capture, diff, error formatting)
-- **Strategy Pattern**: `AiFindCommand` (6 strategies), `CvMatchClient` (multiple templates), `LlmVisionClient` (4 providers)
+- **Strategy Pattern**: `AiFindCommand` (6 strategies), `CvMatchClient`, `LlmVisionClient` (4 providers)
 - **Retry/Resilience**: `RetryPolicy` with exponential backoff
-- **Idempotence**: `SafeClick` doesn't fail if element is already gone
-- **Page Object Model**: `UiMap` maps logical names to version-specific UIA selectors in YAML
+- **Page Object Model**: `UiMap` maps logical names to version-specific UIA selectors
+- **Fallback layers**: FlaUI → Win32 → WinAppDriver → OpenCV → LLM Vision
+- **Composite Provider**: UIA3 + WinAppDriver failover
+- **DI + Plugins**: Microsoft.Extensions.DependencyInjection + assembly-scan plugin loading

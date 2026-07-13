@@ -1,7 +1,8 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Models;
-using static RevitUiController.AutomationHelper;
+using UiController.Core.Models;
+using UiController.Core;
+using static UiController.Core.AutomationHelper;
 
 namespace RevitUiController.Commands;
 
@@ -16,13 +17,62 @@ public class ClickCommand : ICommand
         var query = string.Join(" ", args);
         var start = DateTime.UtcNow;
 
+        var request = CommandResultStore.CurrentRequest;
+        var useChain = request?.Retry == true || !string.IsNullOrEmpty(request?.Strategy);
+
+        if (useChain)
+        {
+            var strategies = ParseStrategies(request?.Strategy);
+            var (success, method, attempts) = await ClickFallbackChain.ExecuteAsync(revitWindow, query, strategies, ct);
+            var elapsed = (DateTime.UtcNow - start).TotalMilliseconds;
+
+            if (!success)
+            {
+                Console.Write(OutputFormatter.FormatError("NotFound", query,
+                [
+                    "All strategies failed",
+                    ..attempts.Select(a => $"{a.Name}: {(a.Success ? "ok" : $"fail ({a.Error ?? "no match"})")} ({a.DurationMs}ms)")
+                ], options: Program.GlobalOptions));
+                return 1;
+            }
+
+            var after = OutputFormatter.CaptureState(revitWindow);
+            var result = new CommandResult
+            {
+                Command = "click",
+                Success = true,
+                Data = new
+                {
+                    target = query,
+                    method,
+                    attempts = attempts.Select(a => new
+                    {
+                        strategy = a.Name,
+                        success = a.Success,
+                        durationMs = a.DurationMs
+                    }).ToList()
+                },
+                DurationMs = elapsed
+            };
+            if (Program.IsScreenshot)
+                result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
+            Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
+            return 0;
+        }
+
         var found = FindByAutoIdInRoot(revitWindow, query);
         if (found == null)
             found = FindFirstEnabledVisible(revitWindow, query);
 
         if (found == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", query, null, Program.GlobalOptions));
+            var similar = AutomationHelper.FindSimilarElementNames(revitWindow, query);
+            var suggestions = new List<string>
+            {
+                "Try 'ai-find \"" + query + "\"' for multi-strategy search",
+                "Try 'list-controls' to see available elements"
+            };
+            Console.Write(OutputFormatter.FormatError("NotFound", query, suggestions, options: Program.GlobalOptions, availableElements: similar));
             return 1;
         }
 
@@ -33,22 +83,32 @@ public class ClickCommand : ICommand
             Console.Write(OutputFormatter.FormatError("ClickFailed", query, null, Program.GlobalOptions));
             return 1;
         }
-        var after = OutputFormatter.CaptureState(revitWindow);
-        var diff = OutputFormatter.ComputeDiff(before, after);
+        var after2 = OutputFormatter.CaptureState(revitWindow);
+        var diff = OutputFormatter.ComputeDiff(before, after2);
 
-        var elapsed = (DateTime.UtcNow - start).TotalMilliseconds;
-        var result = new CommandResult
+        var elapsed2 = (DateTime.UtcNow - start).TotalMilliseconds;
+        var result2 = new CommandResult
         {
             Command = "click",
             Success = true,
             Diff = diff,
             Data = Program.Verbosity == "minimal" ? null : new { target = query },
-            DurationMs = elapsed
+            DurationMs = elapsed2
         };
         if (Program.IsScreenshot)
-            result.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
-        Console.Write(OutputFormatter.FormatResult(result, Program.GlobalOptions));
+            result2.Screenshot = ScreenshotHelper.CaptureWindow(revitWindow);
+        Console.Write(OutputFormatter.FormatResult(result2, Program.GlobalOptions));
         return 0;
+    }
+
+    private static string[]? ParseStrategies(string? strategy)
+    {
+        if (string.IsNullOrEmpty(strategy)) return null;
+        if (strategy.Contains(','))
+            return strategy.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (ClickFallbackChain.DefaultChain.Contains(strategy))
+            return new[] { strategy };
+        return null;
     }
 
     private static AutomationElement? FindByAutoIdInRoot(AutomationElement revitWindow, string nameOrId)

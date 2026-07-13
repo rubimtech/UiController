@@ -1,16 +1,30 @@
 # RevitUiController: Extending the Codebase
 
+## Project Structure — Where to Put Code
+
+| What | Project |
+|------|---------|
+| Generic commands (any app) | `RevitUiController.Core/Commands/` |
+| Revit-specific commands | `RevitUiController.Revit/Commands/` |
+| Service interface | `RevitUiController.Core/Services/I*.cs` |
+| Service implementation | `RevitUiController.Core/Services/*.cs` |
+| Plugin (IPlugin) | Separate DLL → `Host/Plugins/` |
+| Profile (IApplicationProfile) | `RevitUiController.Revit/` or any project |
+| Launcher (IApplicationLauncher) | Any project |
+| Provider (IAutomationProvider) | `RevitUiController.Core/` or any project |
+
 ## How to Add a New Command
 
-### 1. Create a new file in `Commands/`
+### Create command file in `Core/Commands/` (generic) or `Revit/Commands/` (Revit-specific)
 
-Implement `ICommand` (raw) or extend `UiCommandBase` (recommended):
+Namespace: `UiController.Core.Commands` or `RevitUiController.Revit.Commands`
 
 ```csharp
 using FlaUI.Core.AutomationElements;
-using RevitUiController.Models;
+using UiController.Core;
+using UiController.Core.Models;
 
-namespace RevitUiController.Commands;
+namespace UiController.Core.Commands;
 
 public class MyNewCommand : UiCommandBase
 {
@@ -21,7 +35,7 @@ public class MyNewCommand : UiCommandBase
     protected override async Task<CommandResult> ExecuteInternalAsync(
         AutomationElement window, string[] args, CancellationToken ct)
     {
-        RequireArgs(args, 1); // throws if args.Length < 1
+        RequireArgs(args, 1);
 
         var value = GetFlag(args, "--flag", "default");
         var hasFlag = HasFlag(args, "--verbose");
@@ -34,31 +48,20 @@ public class MyNewCommand : UiCommandBase
                 Error = $"NotFound: element '{args[0]}' not found"
             };
 
-        // ... do work ...
         return new CommandResult { Success = true, Data = new { result = "ok" } };
     }
 }
 ```
 
-### 2. Register in `Program.cs` static constructor
-
+### Registration
+Commands are **auto-discovered** via assembly scan in `Host/Program.cs`:
 ```csharp
-Register(new MyNewCommand());
+Registry.RegisterType(typeof(MyNewCommand));
+// or register alias:
+Registry.RegisterAlias("mc", "my-command");
 ```
 
-### 3. Optionally add an alias
-
-```csharp
-private static readonly Dictionary<string, string> Aliases = new()
-{
-    ["mc"] = "my-command",
-};
-```
-
-### 4. Add to help text in `PrintHelp()`
-
-## UiCommandBase Helper Methods
-
+### UiCommandBase Helper Methods
 | Method | Purpose |
 |--------|---------|
 | `FindElement(root, name)` | Find first enabled visible element by name |
@@ -66,8 +69,100 @@ private static readonly Dictionary<string, string> Aliases = new()
 | `GetFlag<T>(args, flag, default)` | Parse typed flag value from args |
 | `HasFlag(args, flag)` | Check if flag is present |
 
-## AutomationHelper Key Methods
+## How to Add a Service
 
+### 1. Create interface in `Core/Services/`
+```csharp
+namespace UiController.Core.Services;
+public interface IMyService
+{
+    string DoSomething();
+}
+```
+
+### 2. Create implementation in `Core/Services/`
+```csharp
+namespace UiController.Core.Services;
+public class MyService : IMyService
+{
+    public string DoSomething() => "result";
+}
+```
+
+### 3. Register in `Host/Program.cs` DI
+```csharp
+services.AddSingleton<IMyService, MyService>();
+```
+
+## How to Create a Plugin (IPlugin)
+
+### 1. Create a separate class library
+```csharp
+using UiController.Core;
+using UiController.Core.Commands;
+
+public class MyPlugin : IPlugin
+{
+    public string Name => "MyPlugin";
+    public void RegisterCommands(CommandRegistry registry)
+    {
+        registry.Register(new MyCommand());
+        registry.RegisterAlias("mc", "my-command");
+    }
+}
+```
+
+### 2. Build to `Host/Plugins/`
+```
+RevitUiController.Host/bin/Debug/net10.0-windows/Plugins/MyPlugin.dll
+```
+
+Plugin DLLs are auto-loaded at startup.
+
+## How to Add a Custom Profile
+
+### Via config.yaml (no code)
+```yaml
+profiles:
+  myapp:
+    processName: MyApp
+    displayName: My Application
+    executablePaths:
+      - "C:\\Program Files\\MyApp\\MyApp.exe"
+```
+Usage: `--profile myapp`
+
+### Via code (IApplicationProfile)
+```csharp
+public class MyAppProfile : IApplicationProfile
+{
+    public string Name => "MyApp";
+    public string ProcessName => "MyApp";
+    public string[] ExecutablePaths => ["C:\\Program Files\\MyApp\\MyApp.exe"];
+    public string? PipeName => null;
+    // ...
+}
+```
+Then use `--profile MyApp` or set `CoreSettings.CurrentProfile = new MyAppProfile()`.
+
+## How to Add a Custom Automation Provider
+
+```csharp
+using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Definitions;
+using FlaUI.UIA3;
+
+public class MyProvider : IAutomationProvider
+{
+    public UIA3Automation? UIA3 => null;
+    public bool IsUia3 => false;
+    public string Name => "MyProvider";
+    // implement all methods...
+}
+```
+Register in `Host/Program.cs` `CreateAutomationProvider()` method.
+
+## AutomationHelper Key Methods
 | Method | Purpose |
 |--------|---------|
 | `FindFirstEnabledVisible(parent, name)` | BFS search with UiMap + fallbacks |
@@ -102,11 +197,12 @@ dotnet test tools\RevitUiController.Tests
 - **Return `CommandResult`** with `Success`, optional `Error`, `Diff`, `Data`
 - **Use `LoggingService.Warn(context, message)`** for non-fatal errors
 - **Extend `UiCommandBase`** rather than raw `ICommand` for automatic state diff
-- **Check `Program.IsUiaOnly`** if you use mouse/GDI and need RDP support
+- **Check `CoreSettings.IsUiaOnly`** if you use mouse/GDI and need RDP support
 
 ## Configuration Files
 | File | Location | Format |
 |------|----------|--------|
+| config.yaml | `./config.yaml`, `%APPDATA%/UiController/config.yaml` | YAML |
 | UiMap | `./uimap.yaml`, `./config/`, `%LOCALAPPDATA%/ReVibe/UiController/` | YAML |
 | Locale | `./locale.yaml`, `./config/`, `%LOCALAPPDATA%/ReVibe/UiController/` | YAML |
 | Templates | `./templates/`, `./cv-templates/`, `%LOCALAPPDATA%/ReVibe/UiController/templates/` | PNG |

@@ -28,6 +28,18 @@ public static class HighlightHelper
                 Opacity = 0.3,
                 Enabled = false
             };
+
+            _overlayForm.Show();
+            System.Windows.Forms.Timer? timer = null;
+            timer = new System.Windows.Forms.Timer { Interval = durationMs };
+            timer.Tick += (_, _) =>
+            {
+                timer?.Stop();
+                timer?.Dispose();
+                try { _overlayForm?.Close(); } catch { }
+                _overlayForm = null;
+            };
+            timer.Start();
         }
         catch { }
     }

@@ -2,9 +2,26 @@ using UiController.Core.Models;
 
 namespace UiController.Core;
 
+public class SessionCheckpoint
+{
+    public string Name { get; set; } = "";
+    public int CommandIndex { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+public class SessionCommandRecord
+{
+    public DateTime Timestamp { get; set; }
+    public string Command { get; set; } = "";
+    public object? Args { get; set; }
+    public bool Success { get; set; }
+    public double DurationMs { get; set; }
+}
+
 public static class SessionContext
 {
     public static bool IsActive { get; private set; }
+    public static string? Name { get; private set; }
     public static string? ActiveDialog { get; private set; }
     public static string? ActiveTab { get; set; }
     public static string? ActiveViewTab { get; set; }
@@ -18,17 +35,33 @@ public static class SessionContext
     public static string? ActiveMonitorName { get; set; }
 
     private static readonly object Lock = new();
+    private const int MaxCommandHistory = 100;
+    private static readonly List<SessionCommandRecord> _commandHistory = new();
+    private static readonly List<SessionCheckpoint> _checkpoints = new();
 
-    public static void Begin()
+    public static IReadOnlyList<SessionCheckpoint> Checkpoints
+    {
+        get { lock (Lock) return _checkpoints.ToList(); }
+    }
+
+    public static IReadOnlyList<SessionCommandRecord> CommandHistory
+    {
+        get { lock (Lock) return _commandHistory.ToList(); }
+    }
+
+    public static void Begin(string? name = null)
     {
         lock (Lock)
         {
             IsActive = true;
+            Name = name;
             ActiveDialog = null;
             ActiveTab = null;
             ActiveViewTab = null;
             DialogStack.Clear();
             Variables.Clear();
+            _commandHistory.Clear();
+            _checkpoints.Clear();
             ActiveHwnd = null;
             ActiveMonitor = null;
             ActiveProcessName = null;
@@ -42,11 +75,14 @@ public static class SessionContext
         lock (Lock)
         {
             IsActive = false;
+            Name = null;
             ActiveDialog = null;
             ActiveTab = null;
             ActiveViewTab = null;
             DialogStack.Clear();
             Variables.Clear();
+            _commandHistory.Clear();
+            _checkpoints.Clear();
             ActiveHwnd = null;
             ActiveMonitor = null;
             ActiveProcessName = null;
@@ -107,6 +143,7 @@ public static class SessionContext
         {
             return new
             {
+                name = Name,
                 isActive = IsActive,
                 activeDialog = ActiveDialog,
                 activeTab = ActiveTab,
@@ -120,6 +157,77 @@ public static class SessionContext
                 activeProcessName = ActiveProcessName,
                 activePid = ActivePid,
                 activeMonitorName = ActiveMonitorName
+            };
+        }
+    }
+
+    public static void RecordCommand(string command, object? args, bool success, double durationMs)
+    {
+        lock (Lock)
+        {
+            _commandHistory.Add(new SessionCommandRecord
+            {
+                Timestamp = DateTime.UtcNow,
+                Command = command,
+                Args = args,
+                Success = success,
+                DurationMs = durationMs
+            });
+            while (_commandHistory.Count > MaxCommandHistory)
+                _commandHistory.RemoveAt(0);
+        }
+    }
+
+    public static void SetCheckpoint(string name)
+    {
+        lock (Lock)
+        {
+            _checkpoints.Add(new SessionCheckpoint
+            {
+                Name = name,
+                CommandIndex = _commandHistory.Count,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    public static int? GetCheckpointIndex(string name)
+    {
+        lock (Lock)
+        {
+            var cp = _checkpoints.LastOrDefault(c => c.Name == name);
+            return cp?.CommandIndex;
+        }
+    }
+
+    public static void RemoveLastCommands(int count)
+    {
+        lock (Lock)
+        {
+            if (count <= 0 || _commandHistory.Count == 0) return;
+            var toRemove = Math.Min(count, _commandHistory.Count);
+            _commandHistory.RemoveRange(_commandHistory.Count - toRemove, toRemove);
+        }
+    }
+
+    public static object FullStatus()
+    {
+        lock (Lock)
+        {
+            return new
+            {
+                name = Name,
+                isActive = IsActive,
+                activeDialog = ActiveDialog,
+                activeTab = ActiveTab,
+                activeViewTab = ActiveViewTab,
+                dialogStack = DialogStack.Reverse().ToList(),
+                variableCount = Variables.Count,
+                commandCount = _commandHistory.Count,
+                checkpointCount = _checkpoints.Count,
+                checkpoints = _checkpoints.Select(c => new { c.Name, c.CommandIndex, c.Timestamp }).ToList(),
+                variables = Variables.Keys.ToList(),
+                lastCommands = _commandHistory.TakeLast(10).ToList()
             };
         }
     }

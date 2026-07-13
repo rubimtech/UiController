@@ -22,7 +22,16 @@ public class InvokeCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(window, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, ["try click instead"], CoreSettings.GlobalOptions));
+            var similar = AutomationHelper.FindSimilarElementNames(window, name);
+            var suggestions = new List<string>
+            {
+                "Try 'ai-find \"" + name + "\"' for multi-strategy search",
+                "Try 'click \"" + name + "\"' as fallback",
+                "Try 'list-controls' to see available elements"
+            };
+            if (similar.Count > 0)
+                suggestions.Add("Similar: " + string.Join(", ", similar.Take(3)));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, suggestions, options: CoreSettings.GlobalOptions, availableElements: similar));
             return Task.FromResult(1);
         }
 

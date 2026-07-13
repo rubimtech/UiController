@@ -28,6 +28,7 @@ public static class OutputFormatter
         var json = pretty
             ? JsonSerializer.Serialize(result, PrettyJsonOptions)
             : JsonSerializer.Serialize(result, JsonOptions) + Environment.NewLine;
+        CommandResultStore.LastResult = result;
         try { LastOutput = json; } catch { }
         return json;
     }
@@ -37,19 +38,37 @@ public static class OutputFormatter
         return FormatResult(result, options?.IsPretty ?? CoreSettings.IsPretty);
     }
 
-    public static string FormatError(string code, string query, List<string>? suggestions = null, ProgramOptions? options = null)
+    public static string FormatError(string code, string query, List<string>? suggestions = null, ProgramOptions? options = null, List<string>? availableElements = null)
     {
-        var pretty = options?.IsPretty ?? CoreSettings.IsPretty;
+        var result = new CommandResult
+        {
+            Success = false,
+            ErrorInfo = new SelfDescribingError
+            {
+                CodeString = code,
+                Query = query,
+                Suggestions = suggestions ?? new List<string>(),
+                AvailableElements = availableElements
+            },
+            Error = $"{code}: '{query}' failed"
+        };
+        return FormatResult(result, options);
+    }
+
+    public static string FormatError(ErrorCode code, string query, List<string>? suggestions = null, ProgramOptions? options = null, List<string>? availableElements = null)
+    {
         var result = new CommandResult
         {
             Success = false,
             ErrorInfo = new SelfDescribingError
             {
                 Code = code,
+                CodeString = code.ToString(),
                 Query = query,
-                Suggestions = suggestions ?? new List<string>()
+                Suggestions = suggestions ?? new List<string>(),
+                AvailableElements = availableElements
             },
-            Error = $"{code}: element '{query}' not found"
+            Error = $"{code}: '{query}' failed"
         };
         return FormatResult(result, options);
     }

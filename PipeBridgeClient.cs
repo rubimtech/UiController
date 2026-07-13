@@ -59,6 +59,7 @@ public class PipeBridgeClient : IDisposable
         var json = System.Text.Json.JsonSerializer.Serialize(msg);
         var bytes = Encoding.UTF8.GetBytes(json);
 
+        // lock prevents concurrent sends (including heartbeat) — by design
         lock (_lock)
         {
             _pipe.Write(BitConverter.GetBytes(bytes.Length), 0, 4);
@@ -72,6 +73,7 @@ public class PipeBridgeClient : IDisposable
     private string? ReadResponse(int timeoutMs)
     {
         if (_pipe == null) return null;
+        try { _pipe.ReadTimeout = timeoutMs; } catch { }
         var lenBuf = new byte[4];
         int read = 0;
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);

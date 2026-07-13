@@ -1,6 +1,6 @@
-﻿using FlaUI.Core.AutomationElements;
+using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Models;
+using UiController.Core.Models;
 using System.Threading;
 
 namespace RevitUiController.Commands;
@@ -37,7 +37,15 @@ public class ToggleCommand : ICommand
         var element = AutomationHelper.FindFirstEnabledVisible(revitWindow, name);
         if (element == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", name, null, Program.GlobalOptions));
+            var similar = AutomationHelper.FindSimilarElementNames(revitWindow, name);
+            var suggestions = new List<string>
+            {
+                "Try 'ai-find \"" + name + "\"' for multi-strategy search",
+                "Try 'list-controls' to see available elements"
+            };
+            if (similar.Count > 0)
+                suggestions.Add("Similar: " + string.Join(", ", similar.Take(3)));
+            Console.Write(OutputFormatter.FormatError("NotFound", name, suggestions, options: Program.GlobalOptions, availableElements: similar));
             return Task.FromResult(1);
         }
 

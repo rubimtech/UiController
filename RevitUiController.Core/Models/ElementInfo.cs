@@ -10,6 +10,10 @@ public class ElementInfo
     public RectInfo? BoundingRect { get; set; }
     public List<ElementInfo>? Children { get; set; }
     public int? Index { get; set; }
+    public string? Selector { get; set; }
+    public string? Type { get; set; }
+    public string? Tag { get; set; }
+    public string? Text { get; set; }
 }
 
 public class RectInfo

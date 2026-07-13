@@ -22,7 +22,13 @@ public class ClickCommand : ICommand
 
         if (found == null)
         {
-            Console.Write(OutputFormatter.FormatError("NotFound", query, null, CoreSettings.GlobalOptions));
+            var similar = AutomationHelper.FindSimilarElementNames(window, query);
+            var suggestions = new List<string>
+            {
+                "Try 'ai-find \"" + query + "\"' for multi-strategy search",
+                "Try 'list-controls' to see available elements"
+            };
+            Console.Write(OutputFormatter.FormatError("NotFound", query, suggestions, options: CoreSettings.GlobalOptions, availableElements: similar));
             return 1;
         }
 

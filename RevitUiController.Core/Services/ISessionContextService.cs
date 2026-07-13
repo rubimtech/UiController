@@ -3,6 +3,7 @@ namespace UiController.Core.Services;
 public interface ISessionContextService
 {
     bool IsActive { get; }
+    string? Name { get; }
     string? ActiveDialog { get; }
     string? ActiveTab { get; set; }
     string? ActiveViewTab { get; set; }
@@ -12,7 +13,7 @@ public interface ISessionContextService
     int? ActivePid { get; set; }
     string? ActiveMonitorName { get; set; }
 
-    void Begin();
+    void Begin(string? name = null);
     void End();
     void PushDialog(string title);
     void PopDialog();
@@ -20,4 +21,7 @@ public interface ISessionContextService
     object? GetVariable(string name);
     void ResetDialogContext();
     object Status();
+    object FullStatus();
+    void RecordCommand(string command, object? args, bool success, double durationMs);
+    IReadOnlyList<SessionCommandRecord> CommandHistory { get; }
 }

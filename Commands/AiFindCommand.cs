@@ -1,8 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
-using RevitUiController.Models;
-using static RevitUiController.AutomationHelper;
+using UiController.Core.Models;
+using static UiController.Core.AutomationHelper;
 
 namespace RevitUiController.Commands;
 
@@ -18,7 +18,7 @@ public class AiFindCommand : ICommand
 
         if (args.Length == 0 || args[0].StartsWith("--"))
         {
-            Console.Write(OutputFormatter.FormatError("InvalidArgs", "ai-find <query> [options]", null, Program.GlobalOptions));
+            Console.Write(OutputFormatter.FormatError(UiController.Core.Models.ErrorCode.InvalidArgs, "ai-find <query> [options]", null, Program.GlobalOptions));
             return 1;
         }
 
@@ -43,6 +43,18 @@ public class AiFindCommand : ICommand
 
         var raw = new List<(AutomationElement element, string matchType)>();
         var strategiesUsed = new List<string>();
+
+        var visionCached = LlmVisionCache.Get(query);
+        if (visionCached != null && !string.IsNullOrEmpty(visionCached.AutomationId))
+        {
+            var cachedEl = FindFirstEnabledVisible(revitWindow, visionCached.AutomationId);
+            if (cachedEl != null)
+            {
+                AddUnique(raw, cachedEl, "visionCache");
+                strategiesUsed.Add("visionCache");
+                goto Output;
+            }
+        }
 
         if (tabName != null)
         {
@@ -317,6 +329,7 @@ public class AiFindCommand : ICommand
         "startsWith" => 1,
         "contains" => 2,
         "regex" => 3,
+        "visionCache" => 3,
         "locale" => 4,
         "automationId" => 5,
         "sibling" => 6,

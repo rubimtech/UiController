@@ -7,6 +7,7 @@
 | `active` | Show active/foreground window + monitor info |
 | `focus <title> [--pid N\|--hwnd <h>]` | Bring window to foreground |
 | `monitors` | List monitors (resolution, DPI, work area) |
+| `process-list (ps) [--filter <name>]` | List all running processes |
 
 ## UI Exploration & Pattern Tools
 | Command | Description |
@@ -25,6 +26,7 @@
 | `grid-read (gr) <name> [--rows N]` | Read DataGrid via GridPattern |
 | `list-items (li) <name> [--max N]` | Read ListBox/ListView items |
 | `table-read (tr) <name> [--rows N]` | Read Table with column headers |
+| `window-screenshot (ws) [--output path.png]` | Screenshot of connected window |
 
 ## Navigation & Interaction
 | Command | Description |
@@ -47,6 +49,11 @@
 | `ribbon-panel <tab> [panel]` | Buttons on a specific ribbon panel |
 | `context-tabs` | List contextual ribbon tabs |
 | `qat [click <name>]` | Quick Access Toolbar |
+| `menu-click (mc) <path>` | Click MenuItem by path (separated by `/ \ >`) |
+| `menu-list (ml)` | List all menu items |
+| `tab-select (tbs) <name>` | Select a tab control by name |
+| `tree-select (trs) <path>` | Select TreeView item by path |
+| `scroll (scr) [--horizontal N] [--vertical N] [--target <name>]` | Scroll a container |
 
 ## Dialog Handling (PropertySheet)
 | Command | Description |
@@ -57,7 +64,7 @@
 | `ps <title> check <label> [t/f]` | Set/read CheckBox |
 | `ps <title> select <label> <option>` | Select ComboBox value |
 | `ps <title> click <button>` | Click dialog button |
-| `ps-batch <title> <json> [--tab t]` | Batch-fill multiple fields from JSON |
+| `ps-batch <title> <json> [--tab t] [--timeout N]` | Batch-fill multiple fields from JSON |
 | `taskdialog <title> read\|click\|expand` | TaskDialog operations |
 
 ## Waiting & Watch
@@ -105,17 +112,20 @@
 ## Revit API Bridge
 | Command | Description |
 |---------|-------------|
-| `revit-api <cmd> [--payload <json>]` | Execute Revit API command via named pipe |
+| `revit-api <cmd> [--payload <json>]` | [DEPRECATED] Use `pipe-api` instead |
+| `pipe-api <cmd> [--payload <json>]` | Execute Revit API command via named pipe |
+| `pipe-events [--last N]` | Show recent PipeEvents from Revit named pipe |
 | `revit-select <id> [id ...]` | Select elements by ID |
 | `revit-get views\|elements\|categories` | Get Revit data |
 
 ## Multi-instance Revit
 | Command | Description |
 |---------|-------------|
-| `revit-instances (ri)` | List running Revit instances |
+| `revit-instances (ri)` | [DEPRECATED] Use `app-instances --profile revit` |
 | `revit-launch [--version Y] [--path <exe>]` | Launch Revit |
 | `multi-exec --all <command>` | Execute command on all instances |
 | `session-switch <pid>` | Switch active session |
+| `app-instances --profile <name>` | List instances for any profile |
 
 ## Scripts & Recording
 | Command | Description |
@@ -151,7 +161,7 @@
 | Command | Description |
 |---------|-------------|
 | `safety-check` | Check/dismiss unexpected warning dialogs |
-| `revit-restart [--path <exe>]` | Start Revit if not running |
+| `app-restart --profile <name>` | Start app if not running |
 | `process-list` | List Revit processes |
 | `process-info` | Connected process details |
 | `logs [--tail N] [--level L]` | Read controller/plugin logs |
@@ -180,6 +190,36 @@
 | `listen-start` | Start event-driven listener (<100ms) |
 | `listen-stop` | Stop listener |
 | `event-log [--last N]` | Show recent automation events |
+
+## Daemon Management
+| Command | Description |
+|---------|-------------|
+| `daemon [--start\|--stop\|--status] [--pipe <name>] [--profile <name>]` | Start/interact with persistent daemon |
+
+## Batch Commands
+| Command | Description |
+|---------|-------------|
+| `batch <json-array> [--pretty]` | Execute multiple commands from JSON array, return array of results |
+
+## Allure Reporting
+| Command | Description |
+|---------|-------------|
+| `allure-setup [--output <dir>]` | Initialize Allure reporting for test results |
+| `allure-generate [--output <dir>] [--history <dir>]` | Generate Allure report from results |
+| `allure-open [--port <port>] [--report <dir>]` | Open Allure report in browser |
+
+## WebView2 Commands
+| Command | Description |
+|---------|-------------|
+| `wv-connect [--port <port>] [--timeout <sec>]` | Connect to WebView2 via CDP |
+| `wv-list` | List WebView2 pages/tabs |
+| `wv-click <selector>` | Click element by CSS selector |
+| `wv-type <selector> <text>` | Type text into element by CSS selector |
+| `wv-text <selector>` | Get text content of element |
+| `wv-eval <js-code>` | Execute JavaScript in WebView2 |
+| `wv-screenshot [--selector <css>]` | Screenshot WebView2 content |
+| `wv-url` | Get current URL of WebView2 |
+| `wv-wait <selector> [--timeout <sec>]` | Wait for element to appear in WebView2 |
 
 ## Fallback Layers
 | Command | Description |

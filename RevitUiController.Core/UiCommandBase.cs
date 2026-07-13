@@ -26,7 +26,7 @@ public abstract class UiCommandBase : ICommand
         }
         catch (Exception ex)
         {
-            Console.Write(OutputFormatter.FormatError("Exception", Name, new[] { ex.Message }.ToList(), Options));
+            Console.Write(OutputFormatter.FormatError(Models.ErrorCode.InternalError, Name, new[] { ex.Message }.ToList(), Options));
             return 1;
         }
     }
@@ -35,7 +35,36 @@ public abstract class UiCommandBase : ICommand
 
     protected AutomationElement? FindElement(AutomationElement root, string name)
     {
-        return AutomationHelper.FindFirstEnabledVisible(root, name);
+        var result = AutomationHelper.FindFirstEnabledVisible(root, name);
+        if (result != null) return result;
+
+        var normalized = LocaleMap.Normalize(name);
+        if (normalized != name)
+            result = AutomationHelper.FindFirstEnabledVisible(root, normalized);
+        if (result != null) return result;
+
+        return null;
+    }
+
+    protected SelfDescribingError BuildElementNotFoundError(string name, AutomationElement? root)
+    {
+        var similar = root != null ? AutomationHelper.FindSimilarElementNames(root, name) : new();
+        var suggestions = new List<string>
+        {
+            "Try 'ai-find \"" + name + "\"' for multi-strategy search",
+            "Try 'list-controls' to see available elements",
+            "Check locale: '" + name + "' in Russian may be localized"
+        };
+        if (similar.Count > 0)
+            suggestions.Add("Similar elements: " + string.Join(", ", similar.Take(3)));
+        return new SelfDescribingError
+        {
+            Code = Models.ErrorCode.ElementNotFound,
+            CodeString = Models.ErrorCode.ElementNotFound.ToString(),
+            Query = name,
+            Suggestions = suggestions,
+            AvailableElements = similar.Count > 0 ? similar : null
+        };
     }
 
     protected void RequireArgs(string[] args, int min)

@@ -451,4 +451,39 @@ public static class AutomationHelper
         catch { }
         return "";
     }
+
+    public static List<string> FindAllElementNames(AutomationElement root, int maxElements = 200)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var queue = new Queue<AutomationElement>();
+        queue.Enqueue(root);
+        var scanned = 0;
+
+        while (queue.Count > 0 && scanned < maxElements)
+        {
+            var current = queue.Dequeue();
+            scanned++;
+            try
+            {
+                var name = current.Name;
+                if (!string.IsNullOrEmpty(name) && !names.Contains(name))
+                    names.Add(name);
+            }
+            catch { }
+
+            foreach (var child in SafeGetChildren(current, 2000))
+            {
+                if (queue.Count + scanned < maxElements)
+                    queue.Enqueue(child);
+            }
+        }
+
+        return names.OrderBy(n => n).ToList();
+    }
+
+    public static List<string> FindSimilarElementNames(AutomationElement root, string name, int maxResults = 5)
+    {
+        var allNames = FindAllElementNames(root);
+        return SafeExtensions.FindSimilar(name, allNames, maxResults);
+    }
 }

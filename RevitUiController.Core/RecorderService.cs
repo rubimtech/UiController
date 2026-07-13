@@ -34,6 +34,7 @@ public static class RecorderService
     {
         path ??= _outputPath;
         if (path == null) return null;
+        try { Directory.CreateDirectory(Path.GetDirectoryName(path)!); } catch { }
         File.WriteAllText(path, string.Join(Environment.NewLine, RecordedActions));
         return path;
     }
@@ -44,7 +45,10 @@ public static class RecorderService
         _isRecording = false;
         var output = string.Join(Environment.NewLine, RecordedActions);
         if (_outputPath != null)
+        {
+            try { Directory.CreateDirectory(Path.GetDirectoryName(_outputPath)!); } catch { }
             File.WriteAllText(_outputPath, output);
+        }
         return output;
     }
 }
